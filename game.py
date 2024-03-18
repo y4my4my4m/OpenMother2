@@ -20,13 +20,10 @@ onett_layer0 = pygame.image.load('assets/maps/onett_layer0.png')
 map_layer0_rect = onett_layer0.get_rect()
 
 onett_layer1 = pygame.image.load('assets/maps/onett_layer1.png')
-# Make layer1 transparent
-# transparent_color = onett_layer1.get_at((0, 1000))
-# onett_layer1.set_colorkey(transparent_color)
 map_layer1_rect = onett_layer1.get_rect()
-tile_size = 32  # Change this to the size of your tiles
-
-tiles_layer1 = [[onett_layer1.subsurface(pygame.Rect(x, y, tile_size, tile_size)) for x in range(0, onett_layer1.get_width() // tile_size * tile_size, tile_size)] for y in range(0, onett_layer1.get_height() // tile_size * tile_size, tile_size)]
+# tile_size = 32  # Change this to the size of your tiles
+# tiles_layer1 = [[onett_layer1.subsurface(pygame.Rect(x, y, tile_size, tile_size)) for x in range(0, onett_layer1.get_width() // tile_size * tile_size, tile_size)] for y in range(0, onett_layer1.get_height() // tile_size * tile_size, tile_size)]
+collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes.json')
 
 # Character
 ness = Character(1000, 1500, 'assets/sprites/ness_normal.png')  # Adjusted for world position
@@ -121,6 +118,11 @@ def draw_everything():
 
     # screen.blit(scaled_ness_image, ness_pos)
 
+    # Render collision boxes for debugging
+    # for box in collision_boxes:
+    #     # Transform box position based on camera view
+    #     transformed_box = camera.apply(box)
+    #     pygame.draw.rect(screen, (255, 0, 0), transformed_box, 1)  # Draw as red boxes
 
     # Render the tiles
     # for y, row in enumerate(tiles_layer1):
