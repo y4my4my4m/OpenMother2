@@ -20,13 +20,13 @@ onett_map = pygame.image.load('assets/maps/onett.png')
 map_rect = onett_map.get_rect()
 
 # Character
-ness = Character(screen_width / 2, screen_height /2, 'assets/sprites/ness_normal.png')
+ness = Character(1000, 1500, 'assets/sprites/ness_normal.png')  # Adjusted for world position
 velocity = 1
 
 # Initialize Camera
 camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
-scaled_map_image = pygame.transform.scale(onett_map, (int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)))
-last_zoom = camera.zoom
+camera.update(ness)  # Force the camera to center on Ness at startup
+
 # Game loop
 running = True
 while running:
@@ -38,14 +38,15 @@ while running:
                 camera.zoom += 0.1
             elif event.button == 5:  # Scroll down
                 camera.zoom -= 0.1
-                camera.zoom = max(0.1, camera.zoom)  # Prevent zooming out too much
-        if event.type == pygame.KEYDOWN :
-            if event.key == pygame.K_LSHIFT :
+                camera.zoom = max(0.1, camera.zoom)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LSHIFT:
                 velocity = 2
-        elif event.type == pygame.KEYUP :
-            if event.key == pygame.K_LSHIFT :
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_LSHIFT:
                 velocity = 1
-    # Movement
+    
+    # Movement and animation update
     keys = pygame.key.get_pressed()
     dx, dy = 0, 0
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -57,24 +58,25 @@ while running:
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         dy = velocity
     ness.move(dx, dy)
+    animated_image = ness.animate()
 
-    # When drawing
-    if camera.zoom != last_zoom:
-        scaled_map_image = pygame.transform.scale(onett_map, (int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)))
-        last_zoom = camera.zoom
-    map_rect_scaled, _ = camera.apply(map_rect)
-    visible_area = pygame.Rect(camera.camera.x, camera.camera.y, screen_width / camera.zoom, screen_height / camera.zoom)
-
-    if map_rect_scaled.colliderect(visible_area):
-        # Render the map only if it collides with the visible area
-        screen.blit(scaled_map_image, map_rect_scaled.topleft - pygame.Vector2(visible_area.topleft))
-
-    scaled_ness_image = pygame.transform.scale(ness.animate(), (int(ness.rect.width * camera.zoom), int(ness.rect.height * camera.zoom)))
-    ness_rect_scaled, _ = camera.apply(ness)
-    screen.blit(scaled_ness_image, ness_rect_scaled.topleft)
-
-    # Inside the game loop
+    # Update the camera to follow Ness, considering the zoom
     camera.update(ness)
+
+    # Clear the screen
+    screen.fill(BLACK)
+
+    # Calculate and apply the scaling and positioning for the world rendering
+    visible_area, zoom_factor = camera.apply(map_rect)
+    scaled_map_image = pygame.transform.scale(onett_map, (int(map_rect.width * zoom_factor), int(map_rect.height * zoom_factor)))
+
+    # Blit the scaled map image adjusted for camera position
+    screen.blit(scaled_map_image, visible_area.topleft)
+
+    # Scale and blit Ness's animated image
+    scaled_ness_image = pygame.transform.scale(animated_image, (int(animated_image.get_width() * zoom_factor), int(animated_image.get_height() * zoom_factor)))
+    ness_world_pos = pygame.Rect(ness.rect.x - camera.camera.x, ness.rect.y - camera.camera.y, scaled_ness_image.get_width(), scaled_ness_image.get_height())
+    screen.blit(scaled_ness_image, ness_world_pos.topleft)
 
     # Update the display
     pygame.display.flip()
