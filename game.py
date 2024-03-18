@@ -25,8 +25,9 @@ velocity = 1
 
 # Initialize Camera
 camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
-camera.zoom = 1.0
-camera.update(ness)  # Force the camera to center on Ness at startup
+# camera.zoom = 1.0
+# camera.update(ness)  # Force the camera to center on Ness at startup
+
 
 # Game loop
 running = True
@@ -60,37 +61,55 @@ while running:
         dy = velocity
     ness.move(dx, dy)
     animated_image = ness.animate()
-
-    # Update the camera to follow Ness, considering the zoom
     camera.update(ness)
 
-    # Clear the screen
+    # Determine the visible area of the map, including a 100px outer bound
+    visible_area = pygame.Rect(
+        camera.camera.x - 100 / camera.zoom, 
+        camera.camera.y - 100 / camera.zoom, 
+        screen_width / camera.zoom + 200 / camera.zoom, 
+        screen_height / camera.zoom + 200 / camera.zoom
+    )
+    visible_area.normalize()  # Ensure width and height are positive
+
+    # Clamp the visible area to the map's bounds
+    visible_area.clamp_ip(map_rect)
+
+    # Extract the visible portion of the map
+    visible_map_segment = onett_map.subsurface(visible_area)
+
+    # Scale the visible portion to the screen size, adjusting for the zoom level
+    scaled_map_image = pygame.transform.scale(visible_map_segment, (
+        int(visible_area.width * camera.zoom), 
+        int(visible_area.height * camera.zoom)
+    ))
+
+    # Calculate the position to blit the scaled map on the screen
+    blit_position = (
+        visible_area.x * camera.zoom - camera.camera.x * camera.zoom, 
+        visible_area.y * camera.zoom - camera.camera.y * camera.zoom
+    )
+
+    # Clear the screen and render the scaled map segment
     screen.fill(BLACK)
+    screen.blit(scaled_map_image, blit_position)
 
-    # Calculate and apply the scaling and positioning for the world rendering
-    visible_area, zoom_factor = camera.apply(map_rect)
-    scaled_map_width, scaled_map_height = int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)
-    scaled_map_image = pygame.transform.scale(onett_map, (scaled_map_width, scaled_map_height))
+    # Render Ness (similarly scaled and positioned)
+    ness_image = ness.animate()
+    ness_pos = (
+        (ness.rect.x - camera.camera.x) * camera.zoom, 
+        (ness.rect.y - camera.camera.y) * camera.zoom
+    )
+    scaled_ness_image = pygame.transform.scale(ness_image, (
+        int(ness.rect.width * camera.zoom), 
+        int(ness.rect.height * camera.zoom)
+    ))
+    screen.blit(scaled_ness_image, ness_pos)
 
-    # Calculate the offset to center Ness on the screen
-    offset_x = screen_width / 2 - (ness.rect.x * camera.zoom)
-    offset_y = screen_height / 2 - (ness.rect.y * camera.zoom)
-
-    # Adjust the map's position based on the camera zoom and Ness's position
-    map_position = (offset_x - camera.camera.x * camera.zoom, offset_y - camera.camera.y * camera.zoom)
-
-    # Draw the scaled map
-    screen.blit(scaled_map_image, map_position)
-
-    # For Ness, scale the sprite and calculate its position to be centered
-    scaled_ness_image = pygame.transform.scale(ness.animate(), (int(ness.rect.width * camera.zoom), int(ness.rect.height * camera.zoom)))
-    ness_position = (screen_width / 2 - scaled_ness_image.get_width() / 2, screen_height / 2 - scaled_ness_image.get_height() / 2)
-
-    # Draw Ness
-    screen.blit(scaled_ness_image, ness_position)
     # Update the display
     pygame.display.flip()
     clock.tick(FPS)
+
 
 pygame.quit()
 sys.exit()
