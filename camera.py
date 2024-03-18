@@ -2,7 +2,7 @@ import pygame
 
 class Camera:
     def __init__(self, width, height, map_width, map_height):
-        self.camera = pygame.Rect(-1000, -1500, width, height)
+        self.camera = pygame.Rect(0, 0, width, height)
         self.width = map_width
         self.height = map_height
 
