@@ -46,7 +46,6 @@ def load_collision_boxes(file_path):
 
 
 # uncomment when using the utility directly 
-
 # Initialize Pygame
 # pygame.init()
 

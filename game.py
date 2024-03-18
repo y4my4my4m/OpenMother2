@@ -27,7 +27,7 @@ map_layer1_rect = onett_layer1.get_rect()
 collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes.json')
 
 # Character
-ness = Character(1000, 1500, 'assets/sprites/ness_normal.png', collision_boxes)  
+ness = Character(1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes)  
 velocity = 1
 
 # Initialize Camera
@@ -113,26 +113,26 @@ def draw_everything():
         visible_area.y * camera.zoom - camera.camera.y * camera.zoom
     )
 
-    # Inside your draw_everything() function before rendering entities
-    if adjust_z_index(ness, collision_boxes):
-        # Draw parts of the environment that are "behind" the character first
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
-        screen.blit(scaled_ness_image, ness_pos)
-        # After that, draw the remaining parts of the environment
-    else:
-        # Draw the character first, then overlay parts of the environment
-        screen.blit(scaled_ness_image, ness_pos)
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
-
-    # # # Render the scaled map segment for layer 1
-    # if ness.rect.y > visible_area.y:
-    #     # If player's Y-coordinate is greater, draw player on top of layer 1
-    #     screen.blit(scaled_ness_image, ness_pos)
+    # # Inside your draw_everything() function before rendering entities
+    # if adjust_z_index(ness, collision_boxes):
+    #     # Draw parts of the environment that are "behind" the character first
     #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    #     screen.blit(scaled_ness_image, ness_pos)
+    #     # After that, draw the remaining parts of the environment
     # else:
-    #     # If player's Y-coordinate is less, draw player below layer 1
-    #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    #     # Draw the character first, then overlay parts of the environment
     #     screen.blit(scaled_ness_image, ness_pos)
+    #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
+
+    # # Render the scaled map segment for layer 1
+    if ness.rect.y > visible_area.y:
+        # If player's Y-coordinate is greater, draw player on top of layer 1
+        screen.blit(scaled_ness_image, ness_pos)
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    else:
+        # If player's Y-coordinate is less, draw player below layer 1
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        screen.blit(scaled_ness_image, ness_pos)
 
     # screen.blit(scaled_ness_image, ness_pos)
 

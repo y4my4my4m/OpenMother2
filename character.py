@@ -1,9 +1,11 @@
 import pygame
 
 class Character:
-    def __init__(self, x, y, filename, collision_boxes):
+    def __init__(self, x, y, width, height, filename, collision_boxes):
         self.x = x
         self.y = y
+        self.width = width
+        self.height = height
         # Load the sprite sheet, making non-transparent via color key
         self.sprite_sheet = pygame.image.load(filename)
         self.make_transparent(self.sprite_sheet)
@@ -24,7 +26,7 @@ class Character:
 
     def load_images(self):
         images = []
-        frame_width, frame_height = 16, 24  # Adjust for your sprite size
+        frame_width, frame_height = self.width, self.height  # Adjust for your sprite size
         for i in range(8):  # 8 directions
             # Calculate the X position, considering 1px spacing and two frames per direction
             x_pos = i * (frame_width * 2)
@@ -71,7 +73,7 @@ class Character:
         if not collision_happened:
             inside_collision = any(self.rect.colliderect(box) for box in self.collision_boxes)
             if inside_collision:
-                dx, dy = 0, 0  # Optionally, allow movement inside collisions
+                dx, dy = 0, 0  # Prevent movement if starting inside a collision
 
         # Apply movement
         self.x += dx
