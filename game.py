@@ -18,9 +18,15 @@ clock = pygame.time.Clock()
 # Load assets
 onett_layer0 = pygame.image.load('assets/maps/onett_layer0.png')
 map_layer0_rect = onett_layer0.get_rect()
-onett_layer1 = pygame.image.load('assets/maps/onett_layer1.png')
-map_layer1_rect = onett_layer1.get_rect()
 
+onett_layer1 = pygame.image.load('assets/maps/onett_layer1.png')
+# Make layer1 transparent
+# transparent_color = onett_layer1.get_at((0, 1000))
+# onett_layer1.set_colorkey(transparent_color)
+map_layer1_rect = onett_layer1.get_rect()
+tile_size = 32  # Change this to the size of your tiles
+
+tiles_layer1 = [[onett_layer1.subsurface(pygame.Rect(x, y, tile_size, tile_size)) for x in range(0, onett_layer1.get_width() // tile_size * tile_size, tile_size)] for y in range(0, onett_layer1.get_height() // tile_size * tile_size, tile_size)]
 
 # Character
 ness = Character(1000, 1500, 'assets/sprites/ness_normal.png')  # Adjusted for world position
@@ -111,7 +117,46 @@ while running:
         int(ness.rect.width * camera.zoom), 
         int(ness.rect.height * camera.zoom)
     ))
-    screen.blit(scaled_ness_image, ness_pos)
+    # Extract the visible portion of the layer 1 map
+    visible_map_segment_layer1 = onett_layer1.subsurface(visible_area)
+
+    # Scale the visible portion to the screen size, adjusting for the zoom level
+    scaled_map_image_layer1 = pygame.transform.scale(visible_map_segment_layer1, (
+        int(visible_area.width * camera.zoom), 
+        int(visible_area.height * camera.zoom)
+    ))
+
+    # Calculate the position to blit the scaled map on the screen
+    blit_position_layer1 = (
+        visible_area.x * camera.zoom - camera.camera.x * camera.zoom, 
+        visible_area.y * camera.zoom - camera.camera.y * camera.zoom
+    )
+
+    # # Render the scaled map segment for layer 1
+    if ness.rect.y > visible_area.y:
+        # If player's Y-coordinate is greater, draw player on top of layer 1
+        screen.blit(scaled_ness_image, ness_pos)
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    else:
+        # If player's Y-coordinate is less, draw player below layer 1
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        screen.blit(scaled_ness_image, ness_pos)
+
+    # screen.blit(scaled_ness_image, ness_pos)
+
+
+    # Render the tiles
+    # for y, row in enumerate(tiles_layer1):
+    #     for x, tile in enumerate(row):
+    #         tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+    #         if ness.rect.y > tile_rect.y:
+    #             # If player's Y-coordinate is greater, draw player on top of tile
+    #             screen.blit(scaled_ness_image, ness_pos)
+    #             screen.blit(tile, tile_rect.topleft)
+    #         else:
+    #             # If player's Y-coordinate is less, draw player below tile
+    #             screen.blit(tile, tile_rect.topleft)
+    #             screen.blit(scaled_ness_image, ness_pos)
 
     # Update the display
     pygame.display.flip()
