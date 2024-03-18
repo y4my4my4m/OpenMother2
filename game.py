@@ -23,12 +23,21 @@ map_rect = onett_map.get_rect()
 ness = Character(screen_width / 2, screen_height /2, 'assets/sprites/ness_normal.png')
 velocity = 1
 
+# Initialize Camera
+camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
+
 # Game loop
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 4:  # Scroll up
+                camera.zoom += 0.1
+            elif event.button == 5:  # Scroll down
+                camera.zoom -= 0.1
+                camera.zoom = max(0.1, camera.zoom)  # Prevent zooming out too much
         if event.type == pygame.KEYDOWN :
             if event.key == pygame.K_LSHIFT :
                 velocity = 2
@@ -48,8 +57,18 @@ while running:
         dy = velocity
     ness.move(dx, dy)
 
-    # Initialize Camera
-    camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    pan_threshold = 100  # Distance from screen edge to start panning
+    pan_amount = 0.5  # How much to pan per frame
+
+    if mouse_x < pan_threshold:
+        camera.camera.x += pan_amount
+    elif mouse_x > screen_width - pan_threshold:
+        camera.camera.x -= pan_amount
+    if mouse_y < pan_threshold:
+        camera.camera.y += pan_amount
+    elif mouse_y > screen_height - pan_threshold:
+        camera.camera.y -= pan_amount
 
     # Inside the game loop
     camera.update(ness)
