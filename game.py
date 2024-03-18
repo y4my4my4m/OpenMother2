@@ -2,6 +2,7 @@ import pygame
 import sys
 from character import Character
 from camera import Camera
+from utils.collision import load_collision_boxes
 
 pygame.init()
 
@@ -119,11 +120,14 @@ def draw_everything():
     # screen.blit(scaled_ness_image, ness_pos)
 
     # Render collision boxes for debugging
-    # for box in collision_boxes:
-    #     # Transform box position based on camera view
-    #     transformed_box = camera.apply(box)
-    #     pygame.draw.rect(screen, (255, 0, 0), transformed_box, 1)  # Draw as red boxes
+    for box in collision_boxes:
+        # print(box)
+        pygame.draw.rect(screen, (255, 0, 0),  camera.apply(box), 2)  # Use a thickness of 2 for visibility
 
+
+    # test_rect = pygame.Rect(1050, 1005, 1500, 1050)  # Adjust size and position as needed
+    # test_rect_t = camera.apply(test_rect)
+    # pygame.draw.rect(screen, (0, 255, 0), test_rect_t, 3)  # Draw in green for contrast
     # Render the tiles
     # for y, row in enumerate(tiles_layer1):
     #     for x, tile in enumerate(row):
@@ -136,7 +140,6 @@ def draw_everything():
     #             # If player's Y-coordinate is less, draw player below tile
     #             screen.blit(tile, tile_rect.topleft)
     #             screen.blit(scaled_ness_image, ness_pos)
-
 
 # Game loop
 running = True
@@ -152,7 +155,7 @@ while running:
                 camera.zoom = max(0.1, camera.zoom)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LSHIFT:
-                velocity = 2
+                velocity = 7
             elif event.key == pygame.K_SPACE:
                 menu_open = not menu_open
                 menu_selection = 0

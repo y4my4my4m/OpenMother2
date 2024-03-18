@@ -7,10 +7,24 @@ class Camera:
         self.height = map_height
         self.zoom = 1.0
 
-    def apply(self, entity):
-        """Transforms an entity's position according to the camera."""
-        return entity.rect.move(self.camera.topleft)
+    # def apply(self, entity):
+    #     """Transforms an entity's position according to the camera."""
+    #     return entity.rect.move(self.camera.topleft)
 
+    def apply(self, entity):
+        """Transforms an entity's or rect's position according to the camera."""
+        if hasattr(entity, 'rect'):  # If the entity has a 'rect' attribute
+            offset_rect = entity.rect.copy()
+        else:  # If the entity is directly a Rect object
+            offset_rect = entity.copy()
+
+        # Adjust for camera position and zoom
+        offset_rect.x = int((offset_rect.x - self.camera.x) * self.zoom)
+        offset_rect.y = int((offset_rect.y - self.camera.y) * self.zoom)
+        offset_rect.width = int(offset_rect.width * self.zoom)
+        offset_rect.height = int(offset_rect.height * self.zoom)
+
+        return offset_rect
     def update(self, target):
         """Centers the camera on the target, adjusted for zoom."""
         self.camera.x = target.rect.x + target.rect.w / 2 - self.camera.width / 2 / self.zoom
