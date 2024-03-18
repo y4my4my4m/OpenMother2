@@ -8,7 +8,6 @@ class Camera:
 
     def apply(self, entity):
         """Applies the camera offset to a game entity."""
-
         # Assuming 'entity' has a 'rect' attribute for entities
         if hasattr(entity, 'rect'):
             return entity.rect.move(self.camera.topleft)

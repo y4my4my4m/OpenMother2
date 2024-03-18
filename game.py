@@ -20,8 +20,8 @@ onett_map = pygame.image.load('assets/maps/onett.png')
 map_rect = onett_map.get_rect()
 
 # Character
-ness = Character(0, 0, 'assets/sprites/ness_normal.png')
-velocity = 2
+ness = Character(screen_width / 2, screen_height /2, 'assets/sprites/ness_normal.png')
+velocity = 1
 
 # Game loop
 running = True
@@ -29,21 +29,24 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+        if event.type == pygame.KEYDOWN :
+            if event.key == pygame.K_LSHIFT :
+                velocity = 2
+        elif event.type == pygame.KEYUP :
+            if event.key == pygame.K_LSHIFT :
+                velocity = 1
     # Movement
     keys = pygame.key.get_pressed()
     dx, dy = 0, 0
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         dx = -velocity
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         dx = velocity
-    if keys[pygame.K_UP]:
+    if keys[pygame.K_UP] or keys[pygame.K_w]:
         dy = -velocity
-    if keys[pygame.K_DOWN]:
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         dy = velocity
     ness.move(dx, dy)
-
-    # Fill the screen
 
     # Initialize Camera
     camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
