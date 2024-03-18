@@ -25,6 +25,7 @@ velocity = 1
 
 # Initialize Camera
 camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
+camera.zoom = 1.0
 camera.update(ness)  # Force the camera to center on Ness at startup
 
 # Game loop
@@ -68,16 +69,25 @@ while running:
 
     # Calculate and apply the scaling and positioning for the world rendering
     visible_area, zoom_factor = camera.apply(map_rect)
-    scaled_map_image = pygame.transform.scale(onett_map, (int(map_rect.width * zoom_factor), int(map_rect.height * zoom_factor)))
+    scaled_map_width, scaled_map_height = int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)
+    scaled_map_image = pygame.transform.scale(onett_map, (scaled_map_width, scaled_map_height))
 
-    # Blit the scaled map image adjusted for camera position
-    screen.blit(scaled_map_image, visible_area.topleft)
+    # Calculate the offset to center Ness on the screen
+    offset_x = screen_width / 2 - (ness.rect.x * camera.zoom)
+    offset_y = screen_height / 2 - (ness.rect.y * camera.zoom)
 
-    # Scale and blit Ness's animated image
-    scaled_ness_image = pygame.transform.scale(animated_image, (int(animated_image.get_width() * zoom_factor), int(animated_image.get_height() * zoom_factor)))
-    ness_world_pos = pygame.Rect(ness.rect.x - camera.camera.x, ness.rect.y - camera.camera.y, scaled_ness_image.get_width(), scaled_ness_image.get_height())
-    screen.blit(scaled_ness_image, ness_world_pos.topleft)
+    # Adjust the map's position based on the camera zoom and Ness's position
+    map_position = (offset_x - camera.camera.x * camera.zoom, offset_y - camera.camera.y * camera.zoom)
 
+    # Draw the scaled map
+    screen.blit(scaled_map_image, map_position)
+
+    # For Ness, scale the sprite and calculate its position to be centered
+    scaled_ness_image = pygame.transform.scale(ness.animate(), (int(ness.rect.width * camera.zoom), int(ness.rect.height * camera.zoom)))
+    ness_position = (screen_width / 2 - scaled_ness_image.get_width() / 2, screen_height / 2 - scaled_ness_image.get_height() / 2)
+
+    # Draw Ness
+    screen.blit(scaled_ness_image, ness_position)
     # Update the display
     pygame.display.flip()
     clock.tick(FPS)
