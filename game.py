@@ -16,15 +16,18 @@ FPS = 60
 clock = pygame.time.Clock()
 
 # Load assets
-onett_map = pygame.image.load('assets/maps/onett.png')
-map_rect = onett_map.get_rect()
+onett_layer0 = pygame.image.load('assets/maps/onett_layer0.png')
+map_layer0_rect = onett_layer0.get_rect()
+onett_layer1 = pygame.image.load('assets/maps/onett_layer1.png')
+map_layer1_rect = onett_layer1.get_rect()
+
 
 # Character
 ness = Character(1000, 1500, 'assets/sprites/ness_normal.png')  # Adjusted for world position
 velocity = 1
 
 # Initialize Camera
-camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
+camera = Camera(screen_width, screen_height, map_layer0_rect.width, map_layer0_rect.height)
 # camera.zoom = 1.0
 # camera.update(ness)  # Force the camera to center on Ness at startup
 
@@ -77,10 +80,10 @@ while running:
     visible_area.normalize()  # Ensure width and height are positive
 
     # Clamp the visible area to the map's bounds
-    visible_area.clamp_ip(map_rect)
+    visible_area.clamp_ip(map_layer0_rect)
 
     # Extract the visible portion of the map
-    visible_map_segment = onett_map.subsurface(visible_area)
+    visible_map_segment = onett_layer0.subsurface(visible_area)
 
     # Scale the visible portion to the screen size, adjusting for the zoom level
     scaled_map_image = pygame.transform.scale(visible_map_segment, (
