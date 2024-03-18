@@ -55,6 +55,9 @@ cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
 # Debug
 debug_collision = True
+debug_layer0 = False
+debug_layer1 = False
+debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
@@ -84,9 +87,9 @@ def draw_everything():
         visible_area.y * camera.zoom - camera.camera.y * camera.zoom
     )
 
-    # Clear the screen and render the scaled map segment
     screen.fill(BLACK)
-    screen.blit(scaled_map_image, blit_position)
+    if not debug_layer0:
+        screen.blit(scaled_map_image, blit_position)
 
     # Render Ness (similarly scaled and positioned)
     ness_image = ness.animate()
@@ -128,10 +131,14 @@ def draw_everything():
     if ness.rect.y > visible_area.y:
         # If player's Y-coordinate is greater, draw player on top of layer 1
         screen.blit(scaled_ness_image, ness_pos)
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+
+        if not debug_layer1:
+            screen.blit(scaled_map_image_layer1, blit_position_layer1)
     else:
         # If player's Y-coordinate is less, draw player below layer 1
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+
+        if not debug_layer1:
+            screen.blit(scaled_map_image_layer1, blit_position_layer1)
         screen.blit(scaled_ness_image, ness_pos)
 
     # screen.blit(scaled_ness_image, ness_pos)
@@ -157,9 +164,19 @@ def draw_everything():
 def draw_debug():
     if debug_collision:
         # Render collision boxes for debugging
-        for box in collision_boxes:
+        for index, box in enumerate(collision_boxes):
             # print(box)
-            pygame.draw.rect(screen, (255, 0, 0),  camera.apply(box), 2)  # Use a thickness of 2 for visibility
+            pygame.draw.rect(screen, (255, 0, 0), camera.apply(box), 2)  # Use a thickness of 2 for visibility
+
+            box_id = debug_font.render(str(index), True, (255, 0, 0))  # Convert index to string before rendering
+            # Create a Rect for the text at the desired position
+            text_rect = pygame.Rect(box.x + 4, box.y + 4, box_id.get_width(), box_id.get_height())
+
+            # Apply the camera transformation to the text Rect
+            transformed_text_rect = camera.apply(text_rect)
+
+            # Blit the text at the transformed position
+            screen.blit(box_id, transformed_text_rect.topleft)
 
 def draw_menu():
     if menu_open:
@@ -216,6 +233,10 @@ while running:
                 menu_selection = 0
             elif event.key == pygame.K_1:
                 debug_collision = not debug_collision
+            elif event.key == pygame.K_2:
+                debug_layer0 = not debug_layer0
+            elif event.key == pygame.K_3:
+                debug_layer1 = not debug_layer1
 
             if menu_open:
                 col = menu_selection % menu_columns

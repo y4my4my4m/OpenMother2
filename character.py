@@ -61,17 +61,17 @@ class Character:
         # Handle horizontal movement
         for box in self.collision_boxes:
             if new_rect.colliderect(box):
-                if dx > 0:  # Moving right
-                    new_rect.right = min(new_rect.right, box.left)
-                    dx = 0
-                if dx < 0:  # Moving left
-                    new_rect.left = max(new_rect.left, box.right)
-                    dx = 0
+                # if dx > 0:  # Moving right
+                #     new_rect.right = min(new_rect.right, box.left)
+                #     dx = 0
+                # if dx < 0:  # Moving left
+                #     new_rect.left = max(new_rect.left, box.right)
+                #     dx = 0
                 if dy > 0:  # Moving down
-                    new_rect.bottom = min(new_rect.bottom, box.bottom)
+                    new_rect.bottom = min(new_rect.bottom, box.bottom - (box.height // 2))
                     dy = 0
                 if dy < 0:  # Moving up
-                    new_rect.top = max(new_rect.top, box.top)
+                    new_rect.top = max(new_rect.top, box.bottom)
                     dy = 0
 
         # Update position and moving status
