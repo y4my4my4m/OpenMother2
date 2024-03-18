@@ -35,18 +35,27 @@ class Camera:
         # Set the inflated rect's top-left to the new position
         new_rect.topleft = (new_x, new_y)
 
-        return new_rect
+        # Calculate scaled position based on the camera position and zoom level
+        scaled_x = (rect.x - self.camera.x) * self.zoom
+        scaled_y = (rect.y - self.camera.y) * self.zoom
+
+        # Return the new position as a Rect, and the zoom as the scale factor
+        return pygame.Rect(scaled_x, scaled_y, rect.width * self.zoom, rect.height * self.zoom), self.zoom
+
 
 
     def update(self, target):
-        """Updates the camera position based on the target entity (e.g., the player character)."""
-        x = -target.rect.centerx + int(self.camera.width / 2 / self.zoom)
-        y = -target.rect.centery + int(self.camera.height / 2 / self.zoom)
-        
-        # Limit scrolling to map size, adjusted by zoom
-        x = min(0, x)
-        y = min(0, y)
-        x = max(-(self.width * self.zoom - self.camera.width), x)
-        y = max(-(self.height * self.zoom - self.camera.height), y)
+        target_center = (target.rect.x + target.rect.w // 2, target.rect.y + target.rect.h // 2)
+        camera_center = (self.camera.x + self.camera.width // 2, self.camera.y + self.camera.height // 2)
 
-        self.camera = pygame.Rect(x, y, self.camera.width, self.camera.height)
+        # Calculate the difference
+        dx = (target_center[0] - camera_center[0]) // 10  # Divide by 10 for a smoother transition
+        dy = (target_center[1] - camera_center[1]) // 10
+
+        # Update the camera's position gradually
+        self.camera.x += dx
+        self.camera.y += dy
+
+        # Adjust bounds as before
+        self.camera.x = min(max(self.camera.x, 0), self.width * self.zoom - self.camera.width)
+        self.camera.y = min(max(self.camera.y, 0), self.height * self.zoom - self.camera.height)

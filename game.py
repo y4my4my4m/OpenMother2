@@ -25,7 +25,8 @@ velocity = 1
 
 # Initialize Camera
 camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
-
+scaled_map_image = pygame.transform.scale(onett_map, (int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)))
+last_zoom = camera.zoom
 # Game loop
 running = True
 while running:
@@ -57,26 +58,23 @@ while running:
         dy = velocity
     ness.move(dx, dy)
 
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    pan_threshold = 100  # Distance from screen edge to start panning
-    pan_amount = 0.5  # How much to pan per frame
+    # When drawing
+    if camera.zoom != last_zoom:
+        scaled_map_image = pygame.transform.scale(onett_map, (int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)))
+        last_zoom = camera.zoom
+    map_rect_scaled, _ = camera.apply(map_rect)
+    visible_area = pygame.Rect(camera.camera.x, camera.camera.y, screen_width / camera.zoom, screen_height / camera.zoom)
 
-    if mouse_x < pan_threshold:
-        camera.camera.x += pan_amount
-    elif mouse_x > screen_width - pan_threshold:
-        camera.camera.x -= pan_amount
-    if mouse_y < pan_threshold:
-        camera.camera.y += pan_amount
-    elif mouse_y > screen_height - pan_threshold:
-        camera.camera.y -= pan_amount
+    if map_rect_scaled.colliderect(visible_area):
+        # Render the map only if it collides with the visible area
+        screen.blit(scaled_map_image, map_rect_scaled.topleft - pygame.Vector2(visible_area.topleft))
+
+    scaled_ness_image = pygame.transform.scale(ness.animate(), (int(ness.rect.width * camera.zoom), int(ness.rect.height * camera.zoom)))
+    ness_rect_scaled, _ = camera.apply(ness)
+    screen.blit(scaled_ness_image, ness_rect_scaled.topleft)
 
     # Inside the game loop
     camera.update(ness)
-
-    # When drawing
-    screen.blit(onett_map, camera.apply(map_rect))
-    screen.blit(ness.animate(), camera.apply(ness))
-
 
     # Update the display
     pygame.display.flip()
