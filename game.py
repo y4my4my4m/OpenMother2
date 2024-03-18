@@ -50,6 +50,9 @@ menu_options = ["Talk to", "Goods", "PSI", "Equip", "Check", "Status"]
 cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
+# Debug
+debug_collision = False
+
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
     visible_area = pygame.Rect(
@@ -119,11 +122,6 @@ def draw_everything():
 
     # screen.blit(scaled_ness_image, ness_pos)
 
-    # Render collision boxes for debugging
-    for box in collision_boxes:
-        # print(box)
-        pygame.draw.rect(screen, (255, 0, 0),  camera.apply(box), 2)  # Use a thickness of 2 for visibility
-
 
     # test_rect = pygame.Rect(1050, 1005, 1500, 1050)  # Adjust size and position as needed
     # test_rect_t = camera.apply(test_rect)
@@ -140,6 +138,14 @@ def draw_everything():
     #             # If player's Y-coordinate is less, draw player below tile
     #             screen.blit(tile, tile_rect.topleft)
     #             screen.blit(scaled_ness_image, ness_pos)
+
+
+def debug_draw():
+    if debug_collision:
+        # Render collision boxes for debugging
+        for box in collision_boxes:
+            # print(box)
+            pygame.draw.rect(screen, (255, 0, 0),  camera.apply(box), 2)  # Use a thickness of 2 for visibility
 
 # Game loop
 running = True
@@ -159,6 +165,8 @@ while running:
             elif event.key == pygame.K_SPACE:
                 menu_open = not menu_open
                 menu_selection = 0
+            elif event.key == pygame.K_1:
+                debug_collision = not debug_collision
 
             if menu_open:
                 if event.key == (pygame.K_LEFT or pygame.K_a):
@@ -195,6 +203,7 @@ while running:
         camera.update(ness)
 
     draw_everything()
+    debug_draw()
 
     if menu_open:
         # Define menu properties
