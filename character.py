@@ -54,34 +54,36 @@ class Character:
     def move(self, dx, dy):
         # Proposed new position
         new_rect = self.rect.move(dx, dy)
-        collision_happened = False
 
+        # Check for existing overlaps with collision boxes
+        inside_boxes = [box for box in self.collision_boxes if self.rect.colliderect(box)]
+
+        # Handle horizontal movement
         for box in self.collision_boxes:
             if new_rect.colliderect(box):
-                collision_happened = True
-                if dy > 0 and self.rect.bottom <= box.top:  # Moving down
-                    dy = max(0, box.top - self.rect.bottom)
-                elif dy < 0 and self.rect.top >= box.bottom:  # Moving up
-                    dy = min(0, box.bottom - self.rect.top)
-                
-                if dx > 0 and self.rect.right <= box.left:  # Moving right
-                    dx = max(0, box.left - self.rect.right)
-                elif dx < 0 and self.rect.left >= box.right:  # Moving left
-                    dx = min(0, box.right - self.rect.left)
+                if dx > 0:  # Moving right
+                    new_rect.right = min(new_rect.right, box.left)
+                    dx = 0
+                if dx < 0:  # Moving left
+                    new_rect.left = max(new_rect.left, box.right)
+                    dx = 0
+                if dy > 0:  # Moving down
+                    new_rect.bottom = min(new_rect.bottom, box.bottom)
+                    dy = 0
+                if dy < 0:  # Moving up
+                    new_rect.top = max(new_rect.top, box.top)
+                    dy = 0
 
-        # Check if the character is inside any collision box at the start
-        if not collision_happened:
-            inside_collision = any(self.rect.colliderect(box) for box in self.collision_boxes)
-            if inside_collision:
-                dx, dy = 0, 0  # Prevent movement if starting inside a collision
-
-        # Apply movement
-        self.x += dx
-        self.y += dy
+        # Update position and moving status
+        self.x = new_rect.left
+        self.y = new_rect.top
         self.rect.topleft = (self.x, self.y)
         self.moving = dx != 0 or dy != 0
 
-        # Determine direction based on movement, using adjusted dx and dy
+        # Update direction based on movement
+        self.update_direction(dx, dy)
+
+    def update_direction(self, dx, dy):
         if dx > 0 and dy < 0:
             self.direction = 5  # Up-right
         elif dx > 0 and dy > 0:
@@ -98,25 +100,4 @@ class Character:
             self.direction = 4  # Up
         elif dy > 0:
             self.direction = 0  # Down
-    # def move(self, dx, dy):
-    #     self.x += dx
-    #     self.y += dy
-    #     self.rect.topleft = (self.x, self.y)
-    #     self.moving = dx != 0 or dy != 0
-    #     # Determine direction based on movement
-    #     if dx > 0 and dy < 0:
-    #         self.direction = 5  # Up-right
-    #     elif dx > 0 and dy > 0:
-    #         self.direction = 7  # Down-right
-    #     elif dx < 0 and dy < 0:
-    #         self.direction = 3  # Up-left
-    #     elif dx < 0 and dy > 0:
-    #         self.direction = 1  # Down-left
-    #     elif dx > 0:
-    #         self.direction = 6  # Right
-    #     elif dx < 0:
-    #         self.direction = 2  # Left
-    #     elif dy < 0:
-    #         self.direction = 4  # Up
-    #     elif dy > 0:
-    #         self.direction = 0  # Down
+
