@@ -1,7 +1,7 @@
 import pygame
 
 class Character:
-    def __init__(self, x, y, filename):
+    def __init__(self, x, y, filename, collision_boxes):
         self.x = x
         self.y = y
         # Load the sprite sheet, making non-transparent via color key
@@ -15,6 +15,7 @@ class Character:
         self.last_update_time = pygame.time.get_ticks()
         self.frame_rate = 150  # milliseconds
         self.moving = False
+        self.collision_boxes = collision_boxes  # Store collision data
 
     def make_transparent(self, image):
         # Set the color key to the top-left pixel's color, assuming it's the background
@@ -49,11 +50,36 @@ class Character:
         return self.images[self.direction][self.current_frame]
 
     def move(self, dx, dy):
+        # Proposed new position
+        new_rect = self.rect.move(dx, dy)
+        collision_happened = False
+
+        for box in self.collision_boxes:
+            if new_rect.colliderect(box):
+                collision_happened = True
+                if dy > 0 and self.rect.bottom <= box.top:  # Moving down
+                    dy = max(0, box.top - self.rect.bottom)
+                elif dy < 0 and self.rect.top >= box.bottom:  # Moving up
+                    dy = min(0, box.bottom - self.rect.top)
+                
+                if dx > 0 and self.rect.right <= box.left:  # Moving right
+                    dx = max(0, box.left - self.rect.right)
+                elif dx < 0 and self.rect.left >= box.right:  # Moving left
+                    dx = min(0, box.right - self.rect.left)
+
+        # Check if the character is inside any collision box at the start
+        if not collision_happened:
+            inside_collision = any(self.rect.colliderect(box) for box in self.collision_boxes)
+            if inside_collision:
+                dx, dy = 0, 0  # Optionally, allow movement inside collisions
+
+        # Apply movement
         self.x += dx
         self.y += dy
         self.rect.topleft = (self.x, self.y)
         self.moving = dx != 0 or dy != 0
-        # Determine direction based on movement
+
+        # Determine direction based on movement, using adjusted dx and dy
         if dx > 0 and dy < 0:
             self.direction = 5  # Up-right
         elif dx > 0 and dy > 0:
@@ -70,3 +96,25 @@ class Character:
             self.direction = 4  # Up
         elif dy > 0:
             self.direction = 0  # Down
+    # def move(self, dx, dy):
+    #     self.x += dx
+    #     self.y += dy
+    #     self.rect.topleft = (self.x, self.y)
+    #     self.moving = dx != 0 or dy != 0
+    #     # Determine direction based on movement
+    #     if dx > 0 and dy < 0:
+    #         self.direction = 5  # Up-right
+    #     elif dx > 0 and dy > 0:
+    #         self.direction = 7  # Down-right
+    #     elif dx < 0 and dy < 0:
+    #         self.direction = 3  # Up-left
+    #     elif dx < 0 and dy > 0:
+    #         self.direction = 1  # Down-left
+    #     elif dx > 0:
+    #         self.direction = 6  # Right
+    #     elif dx < 0:
+    #         self.direction = 2  # Left
+    #     elif dy < 0:
+    #         self.direction = 4  # Up
+    #     elif dy > 0:
+    #         self.direction = 0  # Down

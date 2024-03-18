@@ -27,7 +27,7 @@ map_layer1_rect = onett_layer1.get_rect()
 collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes.json')
 
 # Character
-ness = Character(1000, 1500, 'assets/sprites/ness_normal.png')  # Adjusted for world position
+ness = Character(1000, 1500, 'assets/sprites/ness_normal.png', collision_boxes)  
 velocity = 1
 
 # Initialize Camera
@@ -54,7 +54,7 @@ cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
 # Debug
-debug_collision = False
+debug_collision = True
 
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
@@ -113,15 +113,26 @@ def draw_everything():
         visible_area.y * camera.zoom - camera.camera.y * camera.zoom
     )
 
-    # # Render the scaled map segment for layer 1
-    if ness.rect.y > visible_area.y:
-        # If player's Y-coordinate is greater, draw player on top of layer 1
-        screen.blit(scaled_ness_image, ness_pos)
+    # Inside your draw_everything() function before rendering entities
+    if adjust_z_index(ness, collision_boxes):
+        # Draw parts of the environment that are "behind" the character first
         screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        screen.blit(scaled_ness_image, ness_pos)
+        # After that, draw the remaining parts of the environment
     else:
-        # If player's Y-coordinate is less, draw player below layer 1
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        # Draw the character first, then overlay parts of the environment
         screen.blit(scaled_ness_image, ness_pos)
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+
+    # # # Render the scaled map segment for layer 1
+    # if ness.rect.y > visible_area.y:
+    #     # If player's Y-coordinate is greater, draw player on top of layer 1
+    #     screen.blit(scaled_ness_image, ness_pos)
+    #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    # else:
+    #     # If player's Y-coordinate is less, draw player below layer 1
+    #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    #     screen.blit(scaled_ness_image, ness_pos)
 
     # screen.blit(scaled_ness_image, ness_pos)
 
@@ -143,12 +154,47 @@ def draw_everything():
     #             screen.blit(scaled_ness_image, ness_pos)
 
 
-def debug_draw():
+def draw_debug():
     if debug_collision:
         # Render collision boxes for debugging
         for box in collision_boxes:
             # print(box)
             pygame.draw.rect(screen, (255, 0, 0),  camera.apply(box), 2)  # Use a thickness of 2 for visibility
+
+def draw_menu():
+    if menu_open:
+        # Define menu properties
+        menu_width, menu_height = 400, 200
+        menu_x, menu_y = (screen_width - menu_width) -20 , 20
+        menu_color = BLACK
+
+        # Draw menu
+        pygame.draw.rect(screen, menu_color, pygame.Rect(menu_x, menu_y, menu_width, menu_height))
+
+
+        # Calculate menu item dimensions
+        item_width = menu_width // 2
+        item_height = menu_height // 3
+
+        # Render menu options
+        for i, option in enumerate(menu_options):
+            col = i % menu_columns
+            row = i // menu_columns
+
+            item_x = menu_x + col * (menu_width // menu_columns)
+            item_y = menu_y + row * (menu_height // menu_rows)
+
+            option_text = "> " + option if i == menu_selection else "   " + option
+            text = menu_font.render(option_text, True, (255, 255, 255))
+            screen.blit(text, (item_x + 10, item_y + 10))
+
+def adjust_z_index(character, collision_boxes):
+    for box in collision_boxes:
+        if character.rect.colliderect(box):
+            # Check if character's bottom is within the "allowable" range of the colliding box
+            if box.top < character.rect.bottom <= box.top + 8:  # Allow moving down halfway
+                return True  # Draw character on top
+    return False
 
 # Game loop
 running = True
@@ -214,33 +260,9 @@ while running:
         camera.update(ness)
 
     draw_everything()
-    debug_draw()
+    draw_debug()
 
-    if menu_open:
-        # Define menu properties
-        menu_width, menu_height = 400, 200
-        menu_x, menu_y = (screen_width - menu_width) -20 , 20
-        menu_color = BLACK
-
-        # Draw menu
-        pygame.draw.rect(screen, menu_color, pygame.Rect(menu_x, menu_y, menu_width, menu_height))
-
-
-        # Calculate menu item dimensions
-        item_width = menu_width // 2
-        item_height = menu_height // 3
-
-        # Render menu options
-        for i, option in enumerate(menu_options):
-            col = i % menu_columns
-            row = i // menu_columns
-
-            item_x = menu_x + col * (menu_width // menu_columns)
-            item_y = menu_y + row * (menu_height // menu_rows)
-
-            option_text = "> " + option if i == menu_selection else "   " + option
-            text = menu_font.render(option_text, True, (255, 255, 255))
-            screen.blit(text, (item_x + 10, item_y + 10))
+    draw_menu()
 
     # Update the display
     pygame.display.flip()
