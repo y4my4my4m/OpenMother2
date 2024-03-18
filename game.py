@@ -28,6 +28,10 @@ camera = Camera(screen_width, screen_height, map_rect.width, map_rect.height)
 # camera.zoom = 1.0
 # camera.update(ness)  # Force the camera to center on Ness at startup
 
+# Music
+pygame.mixer.music.load('assets/music/onett.mp3')
+pygame.mixer.music.play(-1)
+
 
 # Game loop
 running = True
@@ -92,13 +96,21 @@ while running:
 
     # Clear the screen and render the scaled map segment
     screen.fill(BLACK)
-    # Adjust map rendering to display the scaled map based on the zoom level
-    scaled_map = pygame.transform.scale(onett_map, (int(map_rect.width * camera.zoom), int(map_rect.height * camera.zoom)))
-    screen.blit(scaled_map, camera.apply(map_rect))
-    
-    ness_sprite = ness.animate()
-    screen.blit(ness_sprite, camera.apply(ness))
+    screen.blit(scaled_map_image, blit_position)
 
+    # Render Ness (similarly scaled and positioned)
+    ness_image = ness.animate()
+    ness_pos = (
+        (ness.rect.x - camera.camera.x) * camera.zoom, 
+        (ness.rect.y - camera.camera.y) * camera.zoom
+    )
+    scaled_ness_image = pygame.transform.scale(ness_image, (
+        int(ness.rect.width * camera.zoom), 
+        int(ness.rect.height * camera.zoom)
+    ))
+    screen.blit(scaled_ness_image, ness_pos)
+
+    # Update the display
     pygame.display.flip()
     clock.tick(FPS)
 
