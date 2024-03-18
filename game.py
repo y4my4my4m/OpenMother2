@@ -42,6 +42,9 @@ pygame.mixer.music.play(-1)
 # Menu
 menu_open = False
 menu_selection = 0
+menu_columns = 2
+menu_rows = 3
+
 menu_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24)
 # Define menu options
 menu_options = ["Talk to", "Goods", "PSI", "Equip", "Check", "Status"]
@@ -169,18 +172,26 @@ while running:
                 debug_collision = not debug_collision
 
             if menu_open:
-                if event.key == (pygame.K_LEFT or pygame.K_a):
-                    menu_selection = (menu_selection - 1) % len(menu_options)
+                col = menu_selection % menu_columns
+                row = menu_selection // menu_columns
+
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    col = max(col - 1, 0)
                     cursor_horizontal_sfx.play()
-                elif event.key == (pygame.K_RIGHT or pygame.K_d):
-                    menu_selection = (menu_selection + 1) % len(menu_options)
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    col = min(col + 1, menu_columns - 1)
                     cursor_horizontal_sfx.play()
-                elif event.key == (pygame.K_UP or pygame.K_w):
-                    menu_selection = (menu_selection - 1) % len(menu_options)
+                elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                    row = max(row - 1, 0)
                     cursor_vertical_sfx.play()
-                elif event.key == (pygame.K_DOWN or pygame.K_s):
-                    menu_selection = (menu_selection + 1) % len(menu_options)
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    row = min(row + 1, menu_rows - 1)
                     cursor_vertical_sfx.play()
+                # Calculate the new selection index based on the updated row and column
+                new_selection = row * menu_columns + col
+                # Ensure the new selection is within the bounds of the menu options
+                menu_selection = min(new_selection, len(menu_options) - 1)
+
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LSHIFT:
                 velocity = 1
@@ -221,15 +232,15 @@ while running:
 
         # Render menu options
         for i, option in enumerate(menu_options):
-            col = i % 2
-            row = i // 2
-            item_x = menu_x + col * item_width
-            item_y = menu_y + row * item_height
+            col = i % menu_columns
+            row = i // menu_columns
+
+            item_x = menu_x + col * (menu_width // menu_columns)
+            item_y = menu_y + row * (menu_height // menu_rows)
 
             option_text = "> " + option if i == menu_selection else "   " + option
-
             text = menu_font.render(option_text, True, (255, 255, 255))
-            screen.blit(text, (item_x + 56, item_y + 16))
+            screen.blit(text, (item_x + 10, item_y + 10))
 
     # Update the display
     pygame.display.flip()
