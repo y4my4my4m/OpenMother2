@@ -43,11 +43,14 @@ pygame.mixer.music.play(-1)
 
 # Menu
 menu_open = False
+menu_selection = 0
 menu_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24)
+# Define menu options
+menu_options = ["Talk to", "Goods", "PSI", "Equip", "Check", "Status"]
 
 # Sound
-cursor_horizontal_sfx = pygame.mixer.sound.load('assets/sounds/curshoriz.wav')
-cursor_vertical_sfx = pygame.mixer.sound.load('assets/sounds/cursverti.wav')
+cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
+cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
@@ -150,6 +153,21 @@ while running:
                 velocity = 2
             elif event.key == pygame.K_SPACE:
                 menu_open = not menu_open
+                menu_selection = 0
+
+            if menu_open:
+                if event.key == (pygame.K_LEFT or pygame.K_a):
+                    menu_selection = (menu_selection - 1) % len(menu_options)
+                    cursor_horizontal_sfx.play()
+                elif event.key == (pygame.K_RIGHT or pygame.K_d):
+                    menu_selection = (menu_selection + 1) % len(menu_options)
+                    cursor_horizontal_sfx.play()
+                elif event.key == (pygame.K_UP or pygame.K_w):
+                    menu_selection = (menu_selection - 1) % len(menu_options)
+                    cursor_vertical_sfx.play()
+                elif event.key == (pygame.K_DOWN or pygame.K_s):
+                    menu_selection = (menu_selection + 1) % len(menu_options)
+                    cursor_vertical_sfx.play()
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LSHIFT:
                 velocity = 1
@@ -182,21 +200,21 @@ while running:
         # Draw menu
         pygame.draw.rect(screen, menu_color, pygame.Rect(menu_x, menu_y, menu_width, menu_height))
 
-        # Define menu options
-        options = ["Talk to", "Goods", "PSI", "Equip", "Check", "Status"]
 
         # Calculate menu item dimensions
         item_width = menu_width // 2
         item_height = menu_height // 3
 
         # Render menu options
-        for i, option in enumerate(options):
+        for i, option in enumerate(menu_options):
             col = i % 2
             row = i // 2
             item_x = menu_x + col * item_width
             item_y = menu_y + row * item_height
 
-            text = menu_font.render(option, True, (255, 255, 255))
+            option_text = "> " + option if i == menu_selection else "   " + option
+
+            text = menu_font.render(option_text, True, (255, 255, 255))
             screen.blit(text, (item_x + 56, item_y + 16))
 
     # Update the display
