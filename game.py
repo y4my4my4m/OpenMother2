@@ -12,6 +12,12 @@ pygame.init()
 screen_width = 1280
 screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height))
+# detect screen resolution
+# infoObject = pygame.display.Info()
+# screen_width = infoObject.current_w
+# screen_height = infoObject.current_h
+# make it full screen
+# screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 
 # Colors and FPS
 BLACK = (0, 0, 0)
@@ -84,7 +90,25 @@ def draw_everything():
     visible_area.normalize()  # Ensure width and height are positive
 
     visible_area.clamp_ip(onett_layer0.get_rect())
-    visible_map_segment = onett_layer0.subsurface(visible_area)
+    # Before creating a subsurface, check if visible_area exceeds the bounds of onett_layer0
+    if visible_area.right > onett_layer0.get_width():
+        visible_area.right = onett_layer0.get_width()
+    if visible_area.bottom > onett_layer0.get_height():
+        visible_area.bottom = onett_layer0.get_height()
+
+    # After adjustments, check if visible_area has a valid size to avoid ValueError when creating a subsurface.
+    # If not, default to a minimal valid subsurface or handle as needed.
+    if visible_area.width <= 0 or visible_area.height <= 0:
+        # Default to a minimal subsurface or handle this case as needed, perhaps with a placeholder or error message.
+        print("Visible area is outside the surface bounds.")
+        return  # Skip rendering or handle as needed.
+
+    try:
+        visible_map_segment = onett_layer0.subsurface(visible_area)
+    except ValueError:
+        # Handle the case when subsurface cannot be created due to invalid rectangle, if necessary.
+        print("Error creating subsurface. Visible area might be outside the surface bounds.")
+        return
 
 
     # Scale the visible portion to the screen size, adjusting for the zoom level
