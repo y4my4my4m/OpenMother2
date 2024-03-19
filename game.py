@@ -117,29 +117,29 @@ def draw_everything():
     )
 
     # # Inside your draw_everything() function before rendering entities
-    # if adjust_z_index(ness, collision_boxes):
-    #     # Draw parts of the environment that are "behind" the character first
-    #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
-    #     screen.blit(scaled_ness_image, ness_pos)
-    #     # After that, draw the remaining parts of the environment
-    # else:
-    #     # Draw the character first, then overlay parts of the environment
-    #     screen.blit(scaled_ness_image, ness_pos)
-    #     screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    if adjust_z_index(ness, collision_boxes):
+        # Draw parts of the environment that are "behind" the character first
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        screen.blit(scaled_ness_image, ness_pos)
+        # After that, draw the remaining parts of the environment
+    else:
+        # Draw the character first, then overlay parts of the environment
+        screen.blit(scaled_ness_image, ness_pos)
+        screen.blit(scaled_map_image_layer1, blit_position_layer1)
 
     # # Render the scaled map segment for layer 1
-    if ness.rect.y > visible_area.y:
-        # If player's Y-coordinate is greater, draw player on top of layer 1
-        screen.blit(scaled_ness_image, ness_pos)
+    # if ness.rect.y > visible_area.y:
+    #     # If player's Y-coordinate is greater, draw player on top of layer 1
+    #     screen.blit(scaled_ness_image, ness_pos)
 
-        if not debug_layer1:
-            screen.blit(scaled_map_image_layer1, blit_position_layer1)
-    else:
-        # If player's Y-coordinate is less, draw player below layer 1
+    #     if not debug_layer1:
+    #         screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    # else:
+    #     # If player's Y-coordinate is less, draw player below layer 1
 
-        if not debug_layer1:
-            screen.blit(scaled_map_image_layer1, blit_position_layer1)
-        screen.blit(scaled_ness_image, ness_pos)
+    #     if not debug_layer1:
+    #         screen.blit(scaled_map_image_layer1, blit_position_layer1)
+    #     screen.blit(scaled_ness_image, ness_pos)
 
     # screen.blit(scaled_ness_image, ness_pos)
 
@@ -209,8 +209,16 @@ def adjust_z_index(character, collision_boxes):
     for box in collision_boxes:
         if character.rect.colliderect(box):
             # Check if character's bottom is within the "allowable" range of the colliding box
-            if box.top < character.rect.bottom <= box.top + 8:  # Allow moving down halfway
-                return True  # Draw character on top
+            # if box.top < character.rect.bottom <= box.top + 8:  # Allow moving down halfway
+            #     return True  # Draw character on top
+            # elif box.bottom > character.rect.top >= box.bottom - 8:
+            #     return True  # Draw character below
+
+            # half of the character can move up to half of the size of the box
+            if box.top < character.rect.bottom <= box.top + (box.height // 2):
+                return False
+            elif box.bottom > character.rect.top >= box.bottom - (box.height // 2):
+                return True
     return False
 
 # Game loop

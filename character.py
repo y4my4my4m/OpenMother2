@@ -54,34 +54,38 @@ class Character:
     def move(self, dx, dy):
         # Proposed new position
         new_rect = self.rect.move(dx, dy)
-
-        # Check for existing overlaps with collision boxes
-        inside_boxes = [box for box in self.collision_boxes if self.rect.colliderect(box)]
-
-        # Handle horizontal movement
+        
         for box in self.collision_boxes:
             if new_rect.colliderect(box):
+                # Horizontal collision
                 # if dx > 0:  # Moving right
-                #     new_rect.right = min(new_rect.right, box.left)
-                #     dx = 0
-                # if dx < 0:  # Moving left
-                #     new_rect.left = max(new_rect.left, box.right)
-                #     dx = 0
+                #     # Smoothly adjust the character right up to the left edge of the box
+                #     dx = box.left - self.rect.right
+                # elif dx < 0:  # Moving left
+                #     # Smoothly adjust the character left up to the right edge of the box
+                #     dx = box.right - self.rect.left
+                
+                # Vertical collision - allowing partial overlap for smooth transition
                 if dy > 0:  # Moving down
-                    new_rect.bottom = min(new_rect.bottom, box.bottom - (box.height // 2))
-                    dy = 0
-                if dy < 0:  # Moving up
-                    new_rect.top = max(new_rect.top, box.bottom)
-                    dy = 0
+                    # Allow moving down until character's bottom edge is at box's halfway point
+                    halfway_down = box.top + (box.height // 2)
+                    if self.rect.bottom + dy > halfway_down:
+                        dy = halfway_down - self.rect.bottom
+                elif dy < 0:  # Moving up
+                    # Allow moving up until character's top edge is at box's halfway point
+                    halfway_up = box.bottom - (box.height // 2)
+                    if self.rect.top + dy < halfway_up:
+                        dy = halfway_up - self.rect.top
 
-        # Update position and moving status
-        self.x = new_rect.left
-        self.y = new_rect.top
+        # Update the character's position
+        self.x += dx
+        self.y += dy
         self.rect.topleft = (self.x, self.y)
         self.moving = dx != 0 or dy != 0
 
-        # Update direction based on movement
+        # Update direction based on the final movement
         self.update_direction(dx, dy)
+
 
     def update_direction(self, dx, dy):
         if dx > 0 and dy < 0:
