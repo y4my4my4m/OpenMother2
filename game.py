@@ -1,6 +1,7 @@
 import pygame
 import sys
 from character import Character
+from npc import NPC
 from camera import Camera
 from utils.collision import load_collision_boxes
 
@@ -59,6 +60,9 @@ debug_layer0 = False
 debug_layer1 = False
 debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
+# NPCs
+npcs = [NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!")]
+
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
     visible_area = pygame.Rect(
@@ -69,11 +73,9 @@ def draw_everything():
     )
     visible_area.normalize()  # Ensure width and height are positive
 
-    # Clamp the visible area to the map's bounds
-    visible_area.clamp_ip(map_layer0_rect)
-
-    # Extract the visible portion of the map
+    visible_area.clamp_ip(onett_layer0.get_rect())
     visible_map_segment = onett_layer0.subsurface(visible_area)
+
 
     # Scale the visible portion to the screen size, adjusting for the zoom level
     scaled_map_image = pygame.transform.scale(visible_map_segment, (
@@ -102,6 +104,8 @@ def draw_everything():
         int(ness.rect.height * camera.zoom)
     ))
     # Extract the visible portion of the layer 1 map
+
+    visible_area.clamp_ip(onett_layer1.get_rect())
     visible_map_segment_layer1 = onett_layer1.subsurface(visible_area)
 
     # Scale the visible portion to the screen size, adjusting for the zoom level
@@ -119,14 +123,28 @@ def draw_everything():
     # # Inside your draw_everything() function before rendering entities
     if adjust_z_index(ness, collision_boxes):
         # Draw parts of the environment that are "behind" the character first
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        if not debug_layer1:
+            screen.blit(scaled_map_image_layer1, blit_position_layer1)
         screen.blit(scaled_ness_image, ness_pos)
         # After that, draw the remaining parts of the environment
     else:
         # Draw the character first, then overlay parts of the environment
         screen.blit(scaled_ness_image, ness_pos)
-        screen.blit(scaled_map_image_layer1, blit_position_layer1)
+        if not debug_layer1:
+            screen.blit(scaled_map_image_layer1, blit_position_layer1)
 
+
+    for npc in npcs:
+        npc_image = npc.animate()
+        npc_pos = (
+            (npc.rect.x - camera.camera.x) * camera.zoom, 
+            (npc.rect.y - camera.camera.y) * camera.zoom
+        )
+        scaled_npc_image = pygame.transform.scale(npc_image, (
+            int(npc.rect.width * camera.zoom), 
+            int(npc.rect.height * camera.zoom)
+        ))
+        screen.blit(scaled_npc_image, npc_pos)
     # # Render the scaled map segment for layer 1
     # if ness.rect.y > visible_area.y:
     #     # If player's Y-coordinate is greater, draw player on top of layer 1
@@ -221,6 +239,13 @@ def adjust_z_index(character, collision_boxes):
                 return True
     return False
 
+def check_interaction(player, npcs):
+    for npc in npcs:
+        # Simple distance check for interaction
+        if player.rect.colliderect(npc.rect.inflate(20, 20)):  # Inflate the NPC's rect for a larger interaction area
+            return npc
+    return None
+
 # Game loop
 running = True
 while running:
@@ -245,6 +270,13 @@ while running:
                 debug_layer0 = not debug_layer0
             elif event.key == pygame.K_3:
                 debug_layer1 = not debug_layer1
+
+            if event.key == pygame.K_e:  # Example interaction key
+                interacting_npc = check_interaction(ness, npcs)
+                cursor_horizontal_sfx.play()
+                if interacting_npc:
+                    interacting_npc.interact()
+                    cursor_vertical_sfx.play()
 
             if menu_open:
                 col = menu_selection % menu_columns
@@ -289,6 +321,7 @@ while running:
         camera.update(ness)
 
     draw_everything()
+
     draw_debug()
 
     draw_menu()
