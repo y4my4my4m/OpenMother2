@@ -183,12 +183,13 @@ def draw_debug():
 def draw_menu():
     if menu_open:
         # Define menu properties
-        menu_width, menu_height = 400, 200
+        menu_width, menu_height = 240, 160
         menu_x, menu_y = (screen_width - menu_width) -20 , 20
         menu_color = BLACK
 
         # Draw menu
-        pygame.draw.rect(screen, menu_color, pygame.Rect(menu_x, menu_y, menu_width, menu_height))
+        pygame.draw.rect(screen, menu_color, (menu_x, menu_y, menu_width, menu_height))
+        pygame.draw.rect(screen, (255, 255, 255), (menu_x, menu_y, menu_width, menu_height), 2)
 
 
         # Calculate menu item dimensions
