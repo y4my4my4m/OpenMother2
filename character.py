@@ -51,31 +51,32 @@ class Character:
 
         return self.images[self.direction][self.current_frame]
 
-    def move(self, dx, dy):
+    def move(self, dx, dy, debug_disable_collision):
         # Proposed new position
         new_rect = self.rect.move(dx, dy)
         
-        for box in self.collision_boxes:
-            if new_rect.colliderect(box):
-                # Horizontal collision
-                # if dx > 0:  # Moving right
-                #     # Smoothly adjust the character right up to the left edge of the box
-                #     dx = box.left - self.rect.right
-                # elif dx < 0:  # Moving left
-                #     # Smoothly adjust the character left up to the right edge of the box
-                #     dx = box.right - self.rect.left
-                
-                # Vertical collision - allowing partial overlap for smooth transition
-                if dy > 0:  # Moving down
-                    # Allow moving down until character's bottom edge is at box's halfway point
-                    halfway_down = box.top + (box.height // 2)
-                    if self.rect.bottom + dy > halfway_down:
-                        dy = halfway_down - self.rect.bottom
-                elif dy < 0:  # Moving up
-                    # Allow moving up until character's top edge is at box's halfway point
-                    halfway_up = box.bottom - (box.height // 2)
-                    if self.rect.top + dy < halfway_up:
-                        dy = halfway_up - self.rect.top
+        if not debug_disable_collision:
+            for box in self.collision_boxes:
+                if new_rect.colliderect(box):
+                    # Horizontal collision
+                    # if dx > 0:  # Moving right
+                    #     # Smoothly adjust the character right up to the left edge of the box
+                    #     dx = box.left - self.rect.right
+                    # elif dx < 0:  # Moving left
+                    #     # Smoothly adjust the character left up to the right edge of the box
+                    #     dx = box.right - self.rect.left
+                    
+                    # Vertical collision - allowing partial overlap for smooth transition
+                    if dy > 0:  # Moving down
+                        # Allow moving down until character's bottom edge is at box's halfway point
+                        halfway_down = box.top + (box.height // 2)
+                        if self.rect.bottom + dy > halfway_down:
+                            dy = halfway_down - self.rect.bottom
+                    elif dy < 0:  # Moving up
+                        # Allow moving up until character's top edge is at box's halfway point
+                        halfway_up = box.bottom - (box.height // 2)
+                        if self.rect.top + dy < halfway_up:
+                            dy = halfway_up - self.rect.top
 
         # Update the character's position
         self.x += dx

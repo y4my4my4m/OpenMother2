@@ -4,6 +4,7 @@ from character import Character
 from npc import NPC
 from camera import Camera
 from utils.collision import load_collision_boxes
+from dialoguebox import DialogueBox
 
 pygame.init()
 
@@ -18,6 +19,8 @@ FPS = 60
 clock = pygame.time.Clock()
 
 # Load assets
+dialogue_box = DialogueBox('assets/fonts/earthbound-menu-extended.ttf', 24, screen_width, screen_height)
+
 onett_layer0 = pygame.image.load('assets/maps/onett_layer0.png')
 map_layer0_rect = onett_layer0.get_rect()
 
@@ -55,13 +58,20 @@ cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
 # Debug
-debug_collision = True
-debug_layer0 = False
-debug_layer1 = False
+debug_view_collision = False
+debug_view_layer0 = False
+debug_view_layer1 = False
+debug_disable_collision = False
 debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
-npcs = [NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!")]
+npcs = [
+    NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, 3, 4, "look_at_player", dialogue_box),
+    NPC(1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, 1, 9, "look_at_player", dialogue_box),
+    NPC(754, 3500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, 3, 6, "look_at_player", dialogue_box),
+    NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, 3, 2, "look_at_player", dialogue_box),
+    NPC(1490, 1120, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, 3, 14, "look_at_player", dialogue_box)
+]
 
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
@@ -90,7 +100,7 @@ def draw_everything():
     )
 
     screen.fill(BLACK)
-    if not debug_layer0:
+    if not debug_view_layer0:
         screen.blit(scaled_map_image, blit_position)
 
     # Render Ness (similarly scaled and positioned)
@@ -123,18 +133,19 @@ def draw_everything():
     # # Inside your draw_everything() function before rendering entities
     if adjust_z_index(ness, collision_boxes):
         # Draw parts of the environment that are "behind" the character first
-        if not debug_layer1:
+        if not debug_view_layer1:
             screen.blit(scaled_map_image_layer1, blit_position_layer1)
         screen.blit(scaled_ness_image, ness_pos)
         # After that, draw the remaining parts of the environment
     else:
         # Draw the character first, then overlay parts of the environment
         screen.blit(scaled_ness_image, ness_pos)
-        if not debug_layer1:
+        if not debug_view_layer1:
             screen.blit(scaled_map_image_layer1, blit_position_layer1)
 
 
     for npc in npcs:
+        npc.handle_behaviour()
         npc_image = npc.animate()
         npc_pos = (
             (npc.rect.x - camera.camera.x) * camera.zoom, 
@@ -145,42 +156,10 @@ def draw_everything():
             int(npc.rect.height * camera.zoom)
         ))
         screen.blit(scaled_npc_image, npc_pos)
-    # # Render the scaled map segment for layer 1
-    # if ness.rect.y > visible_area.y:
-    #     # If player's Y-coordinate is greater, draw player on top of layer 1
-    #     screen.blit(scaled_ness_image, ness_pos)
-
-    #     if not debug_layer1:
-    #         screen.blit(scaled_map_image_layer1, blit_position_layer1)
-    # else:
-    #     # If player's Y-coordinate is less, draw player below layer 1
-
-    #     if not debug_layer1:
-    #         screen.blit(scaled_map_image_layer1, blit_position_layer1)
-    #     screen.blit(scaled_ness_image, ness_pos)
-
-    # screen.blit(scaled_ness_image, ness_pos)
-
-
-    # test_rect = pygame.Rect(1050, 1005, 1500, 1050)  # Adjust size and position as needed
-    # test_rect_t = camera.apply(test_rect)
-    # pygame.draw.rect(screen, (0, 255, 0), test_rect_t, 3)  # Draw in green for contrast
-    # Render the tiles
-    # for y, row in enumerate(tiles_layer1):
-    #     for x, tile in enumerate(row):
-    #         tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
-    #         if ness.rect.y > tile_rect.y:
-    #             # If player's Y-coordinate is greater, draw player on top of tile
-    #             screen.blit(scaled_ness_image, ness_pos)
-    #             screen.blit(tile, tile_rect.topleft)
-    #         else:
-    #             # If player's Y-coordinate is less, draw player below tile
-    #             screen.blit(tile, tile_rect.topleft)
-    #             screen.blit(scaled_ness_image, ness_pos)
 
 
 def draw_debug():
-    if debug_collision:
+    if debug_view_collision:
         # Render collision boxes for debugging
         for index, box in enumerate(collision_boxes):
             # print(box)
@@ -195,6 +174,11 @@ def draw_debug():
 
             # Blit the text at the transformed position
             screen.blit(box_id, transformed_text_rect.topleft)
+    if debug_disable_collision:
+        menu_width, menu_height = 175, 45
+        pygame.draw.rect(screen, BLACK, pygame.Rect(20, 20, menu_width, menu_height))
+        text = menu_font.render("Collision Disabled", True, (255, 0, 0))
+        screen.blit(text, (30, 25))
 
 def draw_menu():
     if menu_open:
@@ -264,14 +248,18 @@ while running:
             elif event.key == pygame.K_SPACE:
                 menu_open = not menu_open
                 menu_selection = 0
+                cursor_vertical_sfx.play()
             elif event.key == pygame.K_1:
-                debug_collision = not debug_collision
+                debug_view_collision = not debug_view_collision
             elif event.key == pygame.K_2:
-                debug_layer0 = not debug_layer0
+                debug_view_layer0 = not debug_view_layer0
             elif event.key == pygame.K_3:
-                debug_layer1 = not debug_layer1
+                debug_view_layer1 = not debug_view_layer1
+            elif event.key == pygame.K_4:
+                debug_disable_collision = not debug_disable_collision
 
-            if event.key == pygame.K_e:  # Example interaction key
+            if event.key == pygame.K_e:
+                print(f"{ness.x}, {ness.y}")
                 interacting_npc = check_interaction(ness, npcs)
                 cursor_horizontal_sfx.play()
                 if interacting_npc:
@@ -316,7 +304,7 @@ while running:
         dy = velocity
 
     if not menu_open:
-        ness.move(dx, dy)
+        ness.move(dx, dy, debug_disable_collision)
         animated_image = ness.animate()
         camera.update(ness)
 
@@ -325,6 +313,11 @@ while running:
     draw_debug()
 
     draw_menu()
+
+    interacting_npc = check_interaction(ness, npcs)
+    if not interacting_npc:
+        dialogue_box.hide()
+    dialogue_box.draw(screen)
 
     # Update the display
     pygame.display.flip()
