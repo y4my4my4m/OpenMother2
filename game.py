@@ -94,7 +94,7 @@ npcs = [
 ]
 
 # Battle
-battle_menu_options = ["Attack", "Special", "Item", "Run"]
+battle_menu_options = ["Bash", "Goods", "Auto Fight", "PSI", "Defend", "Run"]
 battle_menu = BattleMenu(menu_font, battle_menu_options)
 
 def draw_everything():
@@ -398,7 +398,8 @@ while running:
 
     elif game_state == GAME_STATE_BATTLE:
         if battle_system is None or not battle_system.battle_active:
-            battle_system = BattleSystem(screen, ness, [interacting_npc])
+            # battle_system = BattleSystem(screen, ness, [interacting_npc], 51, "background_scrolling")
+            battle_system = BattleSystem(screen, ness, [interacting_npc], 3, "palette_cycling")
             battle_system.start_battle()
 
         while battle_system.battle_active:
@@ -417,7 +418,7 @@ while running:
                     elif event.key == pygame.K_RETURN:
                         print(f"Selected action: {battle_menu_options[battle_menu.current_selection]}")
                     elif event.key == pygame.K_SPACE:
-                        if (action := battle_menu_options[battle_menu.current_selection]) == "Attack":
+                        if (action := battle_menu_options[battle_menu.current_selection]) == "Bash":
                             battle_system.player_turn()
                             battle_system.enemy_turn()
                     elif event.key == pygame.K_ESCAPE:
