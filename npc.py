@@ -25,6 +25,12 @@ class NPC(Character):
     #         self.dialogue_box.show_text(self.dialogue)
 
     def interact(self):
+        # Standard NPC interaction
+        print(self.dialogue)
+        if self.dialogue_box:
+            self.dialogue_box.show_text(self.dialogue)
+
+    def check(self):
         if self.is_enemy:
             # Trigger battle sequence
             print("Encountered an enemy! Starting battle...")
@@ -32,7 +38,6 @@ class NPC(Character):
         else:
             # Standard NPC interaction
             print(self.dialogue)
-
     def handle_behaviour(self):
         if self.behaviour == "idle":
             # NPC does nothing

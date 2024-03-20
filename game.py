@@ -47,7 +47,7 @@ map_layer1_rect = onett_layer1.get_rect()
 collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes.json')
 
 # Character
-ness_stats = [20, 10, 5, 3, 4, 3]
+ness_stats = [20, 10, 5, 3, 4, 5]
 ness = Character("Ness", 1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes, ness_stats)  
 velocity = 1
 
@@ -87,7 +87,7 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [55, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
     NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
     NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
@@ -300,18 +300,29 @@ while running:
                             # Handle "Talk to" action
                             menu_open = False  # Close the menu
                             # Proceed with the interaction logic, which you might encapsulate in a function
-
                             if interacting_npc:
-                                if interacting_npc.pending_battle:
-                                    game_state = GAME_STATE_BATTLE
-                                    pygame.mixer.music.load(BATTLE_MUSIC_PATH)
-                                    pygame.mixer.music.play(-1)
-                                    interacting_npc.pending_battle = False
                                 if dialogue_box.is_visible:
                                     dialogue_box.hide()
                                 else:
                                     interacting_npc.interact()
                                     cursor_vertical_sfx.play()
+
+                        elif current_selection == "Check":
+                            menu_open = False 
+                            if dialogue_box.is_visible:
+                                dialogue_box.hide()
+                            else:
+                                interacting_npc.check()
+                                cursor_vertical_sfx.play()
+                            if interacting_npc:
+                                if interacting_npc.pending_battle:
+                                    game_state = GAME_STATE_BATTLE
+                                    pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
+                                    # wait for the sound to finish
+                                    pygame.time.wait(2000)
+                                    pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+                                    pygame.mixer.music.play(-1)
+                                    interacting_npc.pending_battle = False
                         else:
                             menu_open = False
                             # Reset current_selection after handling the action

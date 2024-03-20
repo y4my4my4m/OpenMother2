@@ -22,6 +22,7 @@ class BattleSystem:
         self.battle_log = BattleLog(pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24), screen_width, screen_height)
         self.is_player_turn = True
         self.flash_enemy_flag = False
+        self.player_alive = True
 
     def start_battle(self):
         self.battle_active = True
@@ -51,14 +52,60 @@ class BattleSystem:
 
     def calculate_damage(self, attacker, defender):
         # Calculate critical hits and misses based on luck
+        critical_hit = False
         critical_chance = attacker.stats["luck"] - defender.stats["luck"] 
         if random.randint(1, 20) <= critical_chance + 1:
+            pygame.mixer.Sound('assets/sounds/smaaash.wav').play()
             damage = attacker.stats["attack"] * 2  # Critical hit
-            self.battle_log.add_message("Critical hit!")
+            critical_hit = True
         else:
+            pygame.mixer.Sound('assets/sounds/bash.wav').play()
             damage = attacker.stats["attack"] - random.randint(0, defender.stats["defense"])
+    
+        damage = max(damage, 1)  # Ensure minimum damage
+        if damage > 0:
+            if critical_hit:
+                print(f"{attacker.name} dealt {damage} critical damage!")
+                self.battle_log.add_message(f"{attacker.name} dealt {damage} critical damage!")
+                self.battle_log.add_message("Smaaash!")
+            else:
+                print(f"{self.player.name} dealt {damage} damage!")
+                self.battle_log.add_message(f"{self.player.name} dealt {damage} damage!")
+        else:
+            pygame.mixer.Sound('assets/sounds/miss.wav').play()
+            print(f"{self.player.name} missed!")
+            self.battle_log.add_message(f"{self.player.name} missed!")
 
-        return max(damage, 1)  # Ensure minimum damage
+        return damage
+
+
+    def calculate_damage_enemy(self, attacker, defender):
+        # Calculate critical hits and misses based on luck
+        critical_hit = False
+        critical_chance = attacker.stats["luck"] - defender.stats["luck"] 
+        if random.randint(1, 20) <= critical_chance + 1:
+            pygame.mixer.Sound('assets/sounds/smaaash.wav').play()
+            damage = attacker.stats["attack"] * 2  # Critical hit
+            critical_hit = True
+        else:
+            pygame.mixer.Sound('assets/sounds/enemyhit.wav').play()
+            damage = attacker.stats["attack"] - random.randint(0, defender.stats["defense"])
+    
+        damage = max(damage, 1)  # Ensure minimum damage
+        if damage > 0:
+            if critical_hit:
+                print(f"{attacker.name} dealt {damage} critical damage!")
+                self.battle_log.add_message(f"{attacker.name} dealt {damage} critical damage!")
+                self.battle_log.add_message("Smaaash!")
+            else:
+                print(f"{self.player.name} dealt {damage} damage!")
+                self.battle_log.add_message(f"{self.player.name} dealt {damage} damage!")
+        else:
+            pygame.mixer.Sound('assets/sounds/miss.wav').play()
+            print(f"{self.player.name} missed!")
+            self.battle_log.add_message(f"{self.player.name} missed!")
+
+        return damage
 
     def player_turn(self):
         if not self.is_player_turn:
@@ -69,25 +116,17 @@ class BattleSystem:
         # For simplicity, let's assume an attack action
         damage = self.calculate_damage(self.player, self.enemies[0])
         self.enemies[0].stats["hp"] -= damage
-        if damage > 0:
-            pygame.mixer.Sound('assets/sounds/bash.wav').play()
-            print(f"{self.player.name} dealt {damage} damage!")
-            self.battle_log.add_message(f"{self.player.name} dealt {damage} damage!")
-            # show damage on screen
-        else:
-            pygame.mixer.Sound('assets/sounds/miss.wav').play()
-            print(f"{self.player.name} missed!")
-            self.battle_log.add_message(f"{self.player.name} missed!")
         self.is_player_turn = False
         return True
 
     def enemy_turn(self):
         if self.is_player_turn:
             return
+        pygame.mixer.Sound('assets/sounds/enemyattack.wav').play()
         print(f"{self.enemies[0].name}'s turn.")
         self.battle_log.add_message(f"{self.enemies[0].name}'s turn.")
         # Simple enemy behavior for demonstration
-        damage = self.calculate_damage(self.enemies[0], self.player)
+        damage = self.calculate_damage_enemy(self.enemies[0], self.player)
         self.player.stats["hp"] -= damage
         print(f"{self.enemies[0].name} dealt {damage} damage!")
         self.battle_log.add_message(f"{self.enemies[0].name} dealt {damage} damage!")
@@ -97,15 +136,21 @@ class BattleSystem:
         if self.player.stats["hp"] <= 0:
             print(f"{self.player.name} defeated!")
             self.battle_log.add_message(f"{self.player.name} defeated!")
+            pygame.mixer.Sound('assets/sounds/die.wav').play()
+            self.player_alive = False
             return True
         elif all(enemy.stats["hp"] <= 0 for enemy in self.enemies):
             print(f"{self.enemies[0].name} defeated!")
             self.battle_log.add_message(f"{self.enemies[0].name} defeated!")
+            pygame.mixer.Sound('assets/sounds/enemydie.wav').play()
             return True
         return False
 
     def end_battle(self):
         self.battle_active = False
+        if not self.player_alive:
+            print(f"{self.player.name} defeated!")
+            pygame.mixer.Sound('assets/sounds/die.wav').play()
         print("Battle ended.")
 
 class BattleMenu:
@@ -168,23 +213,31 @@ class BattleLog:
         self.messages = []
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.log_height = 100  # Height of the log area
-        self.message_limit = 14  # Max number of messages to display at once
+        self.log_height = 190  # Height of the log area
+        self.message_limit = 5  # Max number of messages to display at once
 
     def add_message(self, message):
         """Add a message to the battle log queue."""
         print(message)
         self.messages.append(message)
+        # self.log_height += 20
         if len(self.messages) > self.message_limit:
             self.messages.pop(0)  # Remove the oldest message
 
     def draw(self, screen):
         """Draw the battle log messages to the screen."""
-        y_offset = self.screen_height - self.log_height  # Start drawing from the bottom
+        y_offset = self.screen_height - self.log_height # Start drawing from the bottom
+        # draw the log box
+        pygame.draw.rect(screen, (16, 16, 16), (20, y_offset - 140, 350, self.log_height))
         for message in reversed(self.messages):
-            text_surface = self.font.render(message, True, (255, 255, 255))
-            screen.blit(text_surface, (10, y_offset))
-            y_offset -= text_surface.get_height()  # Move up for the next message
+            if message == "Smaaash!":
+                smash_image = pygame.image.load('assets/sprites/smash.png')
+                screen.blit(smash_image, (40, y_offset + 10))
+                y_offset -= smash_image.get_height() + 10
+            else:
+                text_surface = self.font.render(message, True, (255, 255, 255))
+                screen.blit(text_surface, (40, y_offset))
+                y_offset -= text_surface.get_height()  # Move up for the next message
 
 
 class BattleBackground:
