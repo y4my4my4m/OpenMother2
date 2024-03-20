@@ -269,7 +269,7 @@ while running:
                 camera.zoom = max(0.1, camera.zoom)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LSHIFT:
-                velocity = 7
+                velocity = 4
             elif event.key == pygame.K_SPACE:
                 menu_open = not menu_open
                 menu_selection = 0
@@ -288,8 +288,11 @@ while running:
                 interacting_npc = check_interaction(ness, npcs)
                 cursor_horizontal_sfx.play()
                 if interacting_npc:
-                    interacting_npc.interact()
-                    cursor_vertical_sfx.play()
+                    if dialogue_box.is_visible:
+                        dialogue_box.hide()
+                    else:
+                        interacting_npc.interact()
+                        cursor_vertical_sfx.play()
 
             if menu_open:
                 col = menu_selection % menu_columns
