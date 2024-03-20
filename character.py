@@ -1,7 +1,8 @@
 import pygame
 
 class Character:
-    def __init__(self, x, y, width, height, filename, collision_boxes, stats, inventory=None):
+    def __init__(self, name, x, y, width, height, filename, collision_boxes, stats, inventory=None):
+        self.name = name
         self.x = x
         self.y = y
         self.width = width

@@ -5,7 +5,8 @@ from npc import NPC
 from camera import Camera
 from utils.collision import load_collision_boxes
 from dialoguebox import DialogueBox
-from battle import BattleSystem, BattleMenu
+from battle import BattleSystem, BattleMenu, BattleBackground
+import random
 
 pygame.init()
 
@@ -47,7 +48,7 @@ collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes
 
 # Character
 ness_stats = [20, 10, 5, 3, 4, 3]
-ness = Character(1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes, ness_stats)  
+ness = Character("Ness", 1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes, ness_stats)  
 velocity = 1
 
 # Initialize Camera
@@ -86,11 +87,11 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
-    NPC(1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 36, True, None, 1, 9, "look_at_player", dialogue_box),
-    NPC(1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [50, 20, 30, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
-    NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 2, "look_at_player", dialogue_box),
-    NPC(1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
+    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 36, True, None, 1, 9, "look_at_player", dialogue_box),
+    NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [50, 20, 30, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
+    NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 2, "look_at_player", dialogue_box),
+    NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
 ]
 
 # Battle
@@ -187,18 +188,19 @@ def draw_everything():
 
 
     for npc in npcs:
-        npc.handle_behaviour()
-        npc_image = npc.animate()
-        npc_pos = (
-            (npc.rect.x - camera.camera.x) * camera.zoom, 
-            (npc.rect.y - camera.camera.y) * camera.zoom
-        )
-        scaled_npc_image = pygame.transform.scale(npc_image, (
-            int(npc.rect.width * camera.zoom), 
-            int(npc.rect.height * camera.zoom)
-        ))
-        
-        screen.blit(scaled_npc_image, npc_pos)
+        if npc.stats["hp"] > 0:
+            npc.handle_behaviour()
+            npc_image = npc.animate()
+            npc_pos = (
+                (npc.rect.x - camera.camera.x) * camera.zoom, 
+                (npc.rect.y - camera.camera.y) * camera.zoom
+            )
+            scaled_npc_image = pygame.transform.scale(npc_image, (
+                int(npc.rect.width * camera.zoom), 
+                int(npc.rect.height * camera.zoom)
+            ))
+            
+            screen.blit(scaled_npc_image, npc_pos)
 
 
 def draw_debug():
@@ -397,9 +399,18 @@ while running:
         dialogue_box.draw(screen)
 
     elif game_state == GAME_STATE_BATTLE:
+        print(interacting_npc.name)
         if battle_system is None or not battle_system.battle_active:
             # battle_system = BattleSystem(screen, ness, [interacting_npc], 51, "background_scrolling")
-            battle_system = BattleSystem(screen, ness, [interacting_npc], 164, ['horizontal_oscillation', 'vertical_oscillation'])
+            battle_effects = []
+            effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
+            battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
+            scroll_x=random.randint(-1,1)
+            scroll_y=random.randint(-1,1)
+            scroll_speed_x=random.randint(0,3)
+            scroll_speed_y=random.randint(0,3)
+            battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{random.randint(1,327)}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
+            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background)
             battle_system.start_battle()
 
         while battle_system.battle_active:
@@ -418,7 +429,10 @@ while running:
                     elif event.key == pygame.K_RETURN:
                         print(f"Selected action: {battle_menu_options[battle_menu.current_selection]}")
                     elif event.key == pygame.K_SPACE:
-                        if (action := battle_menu_options[battle_menu.current_selection]) == "Bash":
+                        action = battle_menu_options[battle_menu.menu_selection]
+                        if action == "Bash":
+                            pygame.mixer.Sound('assets/sounds/attack1.wav').play()
+                            # wait for the sound to finish
                             battle_system.player_turn()
                             battle_system.enemy_turn()
                     elif event.key == pygame.K_ESCAPE:
