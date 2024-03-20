@@ -1,5 +1,6 @@
 import pygame
 import random
+import numpy as np
 
 pygame.init()
 # fixme
@@ -14,9 +15,13 @@ class BattleSystem:
         # self.gui = BattleGUI(player, enemies)
         self.current_turn = 'player'
         self.battle_active = False
+        self.bg = None
 
     def start_battle(self):
         self.battle_active = True
+        self.bg = BattleBackground('assets/sprites/battle_backgrounds/25.png', 'palette_cycling')
+        self.bg.prepare()
+
         # Main battle loop
         # while self.battle_active:
         #     self.screen.fill((0, 0, 0))  # Clear screen
@@ -39,6 +44,7 @@ class BattleSystem:
 
     def draw(self, enemy):
         # Draw the enemy
+        self.bg.draw(self.screen)
         self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
        
         # self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
@@ -112,14 +118,35 @@ background_types = [
     "transparency"
 ]
 
-class BattleBackground:
-    def __init__(self, filename, type):
-        self.image = pygame.image.load(filename).convert_alpha()
-        self.type = type
 
-    def draw(self, screen):
-        if self.type == "palette_cycling":
-            # Implement palette cycling effect
-            
-        screen.blit(self.image, (0, 0))
+class BattleBackground:
+    def __init__(self, filename, effect_type):
+        self.original_image = pygame.image.load(filename)
+        self.image = self.original_image.copy()  # Work on a copy for manipulation
+        self.effect_type = effect_type
+        self.palette = None
+        self.palette_index = 0
+
+    def prepare(self):
+        if self.effect_type == "palette_cycling":
+            # Extract unique colors
+            arr = pygame.surfarray.array3d(self.original_image)
+            self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
     
+    def draw(self, screen):
+        if self.effect_type == "palette_cycling":
+            # Cycle the palette
+            self.palette = np.roll(self.palette, shift=-1, axis=0)
+            self.apply_palette_cycling()
+        # mod_bg = pygame.transform.scale(self.image, (screen_width, screen_height), screen)
+        # screen.blit(mod_bg, (0, 0))
+        screen.blit(pygame.transform.scale(self.image, (screen_width, screen_height)), (0, 0))
+       
+
+    def apply_palette_cycling(self):
+        # Direct pixel manipulation to simulate palette cycling
+        arr = pygame.surfarray.array3d(self.original_image)
+        result_arr = arr.copy()
+        for i, color in enumerate(self.palette[:-1]):  # Skip the last color to avoid index out of range
+            result_arr[(arr == self.palette[i]).all(axis=-1)] = self.palette[i + 1]
+        pygame.surfarray.blit_array(self.image, result_arr)
