@@ -90,7 +90,7 @@ npcs = [
     NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
     NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
     NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
-    NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 36, True, None, 3, 2, "look_at_player", dialogue_box),
+    NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
     NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
 ]
 

@@ -9,6 +9,7 @@ screen_width = 1280
 screen_height = 720
 cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
+battle_hud_box = pygame.image.load('assets/sprites/battle_hud_box.png')
 class BattleSystem:
     def __init__(self, screen, player, enemies, bg):
         self.screen = screen
@@ -33,6 +34,20 @@ class BattleSystem:
         self.bg.draw(self.screen)
         self.bg.update()
         self.battle_log.draw(self.screen)
+        self.draw_hud()
+
+    def draw_hud(self):
+        self.screen.blit(pygame.transform.scale(battle_hud_box, (battle_hud_box.get_width() * 2, battle_hud_box.get_height() * 2)), (screen_width // 2 - battle_hud_box.get_width() // 2, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 ))
+        # display player's name
+        player_name_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.name}", True, (0, 0, 0))
+        self.screen.blit(player_name_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 20, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 15))
+        # display player HP
+        player_hp_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['hp']}", True, (0, 0, 0))
+        self.screen.blit(player_hp_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 70, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 45))
+        # display player PSI
+        player_psi_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['psi']}", True, (0, 0, 0))
+        self.screen.blit(player_psi_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 70, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75))
+
 
     def calculate_damage(self, attacker, defender):
         # Calculate critical hits and misses based on luck
@@ -110,7 +125,6 @@ class BattleMenu:
         pygame.draw.rect(screen, (0, 0, 0), (self.menu_x, self.menu_y, self.menu_width, self.menu_height))
         pygame.draw.rect(screen, (255, 255, 255), (self.menu_x, self.menu_y, self.menu_width, self.menu_height), 2)
 
-
         # Calculate menu item dimensions
         item_width = self.menu_width // 2
         item_height = self.menu_height // 3
@@ -155,7 +169,7 @@ class BattleLog:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.log_height = 100  # Height of the log area
-        self.message_limit = 4  # Max number of messages to display at once
+        self.message_limit = 14  # Max number of messages to display at once
 
     def add_message(self, message):
         """Add a message to the battle log queue."""
