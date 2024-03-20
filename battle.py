@@ -67,8 +67,8 @@ class BattleSystem:
         # Simple enemy behavior for demonstration
         damage = self.calculate_damage(self.enemies[0], self.player)
         self.player.stats["hp"] -= damage
-        print(f"Enemy dealt {damage} damage!")
-        self.battle_log.add_message(f"Enemy dealt {self.enemies[0].name} damage!")
+        print(f"{self.enemies[0].name} dealt {damage} damage!")
+        self.battle_log.add_message(f"{self.enemies[0].name} dealt {damage} damage!")
 
     def check_battle_end(self):
         if self.player.stats["hp"] <= 0:
@@ -125,12 +125,16 @@ class BattleMenu:
 
         if key == pygame.K_LEFT or key == pygame.K_a:
             col = max(col - 1, 0)
+            cursor_horizontal_sfx.play()
         elif key == pygame.K_RIGHT or key == pygame.K_d:
             col = min(col + 1, self.menu_columns - 1)
+            cursor_horizontal_sfx.play()
         elif key == pygame.K_UP or key == pygame.K_w:
             row = max(row - 1, 0)
+            cursor_vertical_sfx.play()
         elif key == pygame.K_DOWN or key == pygame.K_s:
             row = min(row + 1, self.menu_rows - 1)
+            cursor_vertical_sfx.play()
 
         new_selection = row * self.menu_columns + col
         self.menu_selection = min(new_selection, len(self.menu_options) - 1)
