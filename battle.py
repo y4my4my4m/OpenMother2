@@ -175,22 +175,22 @@ class BattleBackground:
 
     def draw(self, screen):
         # Reset the image to the original before applying effects
-        self.image = self.original_image.copy()
+        image_for_frame = self.original_image.copy()
         
         # Apply each effect in sequence
         for effect_type in self.effect_types:
             if effect_type == "palette_cycling":
-                self.apply_palette_cycling()
+                self.apply_palette_cycling(image_for_frame)
             elif effect_type == "horizontal_oscillation":
-                self.apply_horizontal_oscillation()
+                image_for_frame = self.apply_horizontal_oscillation(image_for_frame)
             elif effect_type == "vertical_oscillation":
-                self.apply_vertical_oscillation()
+                image_for_frame = self.apply_vertical_oscillation(image_for_frame)
         
         # After applying effects, scale and blit to the screen
-        screen.blit(pygame.transform.scale(self.image, (screen_width, screen_height)), (0, 0))
+        screen.blit(pygame.transform.scale(image_for_frame, (screen_width, screen_height)), (0, 0))
 
 
-    def apply_palette_cycling(self):
+    def apply_palette_cycling(self, image):
         # Direct pixel manipulation to simulate palette cycling
         arr = pygame.surfarray.array3d(self.original_image)
         result_arr = arr.copy()
@@ -198,36 +198,31 @@ class BattleBackground:
             result_arr[(arr == self.palette[i]).all(axis=-1)] = self.palette[i + 1]
         pygame.surfarray.blit_array(self.image, result_arr)
 
-    def apply_horizontal_oscillation(self):
-        """Applies a horizontal oscillation effect to the image pixels."""
-        # Convert the image to a NumPy array for manipulation
-        arr = pygame.surfarray.array3d(self.original_image)
-        oscillated_arr = np.zeros(arr.shape, dtype=np.uint8)
+    def apply_horizontal_oscillation(self, image):
+        arr = pygame.surfarray.array3d(image)
+        oscillated_arr = np.zeros_like(arr)
 
-        wave_amplitude = 10  # Max horizontal shift in pixels
-        wave_frequency = 0.1  # Frequency of the wave
+        wave_amplitude = 10  # How far we want our wave to move
+        wave_frequency = 0.1  # How frequent the waves are
 
-        # Apply the wave effect
-        for y in range(arr.shape[1]):
+        for y in range(arr.shape[1]):  # Iterate over each row
             shift = int(wave_amplitude * math.sin(wave_frequency * y + self.oscillation_phase))
             oscillated_arr[:, y, :] = np.roll(arr[:, y, :], shift, axis=0)
 
-        # Convert the manipulated array back to an image
-        pygame.surfarray.blit_array(self.image, oscillated_arr)
+        pygame.surfarray.blit_array(image, oscillated_arr)
+        return image
 
-    def apply_vertical_oscillation(self):
-        """Applies a vertical oscillation effect to the image pixels."""
-        # Convert the image to a NumPy array for manipulation
-        arr = pygame.surfarray.array3d(self.original_image)
-        oscillated_arr = np.zeros(arr.shape, dtype=np.uint8)
 
-        wave_amplitude = 10
-        wave_frequency = 0.1
+    def apply_vertical_oscillation(self, image):
+        arr = pygame.surfarray.array3d(image)
+        oscillated_arr = np.zeros_like(arr)
 
-        # Apply the wave effect
-        for x in range(arr.shape[0]):
+        wave_amplitude = 10  # How far we want our wave to move
+        wave_frequency = 0.025  # How frequent the waves are
+
+        for x in range(arr.shape[0]):  # Iterate over each column
             shift = int(wave_amplitude * math.sin(wave_frequency * x + self.oscillation_phase))
             oscillated_arr[x, :, :] = np.roll(arr[x, :, :], shift, axis=0)
 
-        # Convert the manipulated array back to an image
-        pygame.surfarray.blit_array(self.image, oscillated_arr)
+        pygame.surfarray.blit_array(image, oscillated_arr)
+        return image
