@@ -1,4 +1,5 @@
 import pygame
+import random
 
 # fixme
 screen_width = 1280
@@ -42,8 +43,14 @@ class BattleSystem:
         self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
         # self.screen.blit(self.enemies[0].battle_sprite, (400, 200))
     def calculate_damage(self, attacker, defender):
-        # Simplified damage calculation
-        damage = attacker.attack - defender.defense
+        # Calculate critical hits and misses based on luck
+        critical_chance = attacker.stats["luck"] - defender.stats["luck"] 
+        if random.randint(1, 20) <= critical_chance + 1:
+            damage = attacker.stats["attack"] * 2  # Critical hit
+            print("Critical hit!")
+        else:
+            damage = attacker.stats["attack"] - random.randint(0, defender.stats["defense"])
+
         return max(damage, 1)  # Ensure minimum damage
 
     def player_turn(self):
@@ -51,21 +58,21 @@ class BattleSystem:
         # Implement player action choice here (attack, use item, PSI)
         # For simplicity, let's assume an attack action
         damage = self.calculate_damage(self.player, self.enemies[0])
-        self.enemies[0].hp -= damage
+        self.enemies[0].stats["hp"] -= damage
         print(f"Player dealt {damage} damage!")
 
     def enemy_turn(self):
         print("Enemy's turn.")
         # Simple enemy behavior for demonstration
         damage = self.calculate_damage(self.enemies[0], self.player)
-        self.player.hp -= damage
+        self.player.stats["hp"] -= damage
         print(f"Enemy dealt {damage} damage!")
 
     def check_battle_end(self):
-        if self.player.hp <= 0:
+        if self.player.stats["hp"] <= 0:
             print("Player defeated!")
             return True
-        elif all(enemy.hp <= 0 for enemy in self.enemies):
+        elif all(enemy.stats["hp"] <= 0 for enemy in self.enemies):
             print("Enemies defeated!")
             return True
         return False

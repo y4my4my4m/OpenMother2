@@ -44,7 +44,8 @@ map_layer1_rect = onett_layer1.get_rect()
 collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes.json')
 
 # Character
-ness = Character(1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes, 30, 10)  
+ness_stats = [20, 10, 5, 3, 4, 3]
+ness = Character(1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes, ness_stats)  
 velocity = 1
 
 # Initialize Camera
@@ -80,11 +81,11 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, 50, 20, True, None, 3, 4, "look_at_player", dialogue_box),
-    NPC(1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, 10, 15, True, None, 1, 9, "look_at_player", dialogue_box),
-    NPC(1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, 20, 10, True, None, 3, 6, "look_at_player", dialogue_box),
-    NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, 20, 10, True, None, 3, 2, "look_at_player", dialogue_box),
-    NPC(1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, 10, 0, True, None, 3, 14, "look_at_player", dialogue_box)
+    NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC(1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], True, None, 1, 9, "look_at_player", dialogue_box),
+    NPC(1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 6, "look_at_player", dialogue_box),
+    NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 2, "look_at_player", dialogue_box),
+    NPC(1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 14, "look_at_player", dialogue_box)
 ]
 
 def draw_everything():

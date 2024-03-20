@@ -1,7 +1,7 @@
 import pygame
 
 class Character:
-    def __init__(self, x, y, width, height, filename, collision_boxes, hp, psi, inventory=None):
+    def __init__(self, x, y, width, height, filename, collision_boxes, stats, inventory=None):
         self.x = x
         self.y = y
         self.width = width
@@ -19,8 +19,14 @@ class Character:
         self.moving = False
         self.collision_boxes = collision_boxes  # Store collision data
         # Battle
-        self.hp = hp
-        self.psi = psi
+        self.stats = {
+            "hp": stats[0],
+            "psi": stats[1],
+            "attack": stats[2],
+            "defense": stats[3],
+            "speed": stats[4],
+            "luck": stats[5],
+        }
         self.inventory = inventory if inventory is not None else {}
       
     def make_transparent(self, image):

@@ -3,8 +3,8 @@ from character import Character
 from dialoguebox import DialogueBox
 from battle import BattleSystem
 class NPC(Character):
-    def __init__(self, x, y, width, height, filename, collision_boxes, dialogue, player, hp, psi, is_enemy=False, inventory=None, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
-        super().__init__(x, y, width, height, filename, collision_boxes, hp, psi, inventory)
+    def __init__(self, x, y, width, height, filename, collision_boxes, dialogue, player, stats, is_enemy=False, inventory=None, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
+        super().__init__(x, y, width, height, filename, collision_boxes, stats, inventory)
         self.dialogue = dialogue
         self.npc_index = npc_index  # This determines which NPC block to use
         self.direction = direction  # 0: up, 1: right, 2: down, 3: left
