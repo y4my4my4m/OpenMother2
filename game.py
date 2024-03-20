@@ -46,7 +46,7 @@ camera = Camera(screen_width, screen_height, map_layer0_rect.width, map_layer0_r
 # camera.update(ness)  # Force the camera to center on Ness at startup
 
 # Music
-pygame.mixer.music.load('assets/music/onett.mp3')
+pygame.mixer.music.load('assets/music/onett_snes.mp3')
 pygame.mixer.music.play(-1)
 
 # Menu
@@ -54,6 +54,7 @@ menu_open = False
 menu_selection = 0
 menu_columns = 2
 menu_rows = 3
+current_selection = None
 
 menu_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24)
 # Define menu options
@@ -179,6 +180,7 @@ def draw_everything():
             int(npc.rect.width * camera.zoom), 
             int(npc.rect.height * camera.zoom)
         ))
+        
         screen.blit(scaled_npc_image, npc_pos)
 
 
@@ -271,9 +273,33 @@ while running:
             if event.key == pygame.K_LSHIFT:
                 velocity = 4
             elif event.key == pygame.K_SPACE:
-                menu_open = not menu_open
-                menu_selection = 0
-                cursor_vertical_sfx.play()
+                # Toggle menu open/close
+                if menu_open:
+                    # If the menu is already open, the Space key now confirms the selection
+                    if current_selection == "Talk to" and check_interaction(ness, npcs):
+                        # Handle "Talk to" action
+                        menu_open = False  # Close the menu
+                        # Proceed with the interaction logic, which you might encapsulate in a function
+
+                        if interacting_npc:
+                            if dialogue_box.is_visible:
+                                dialogue_box.hide()
+                            else:
+                                interacting_npc.interact()
+                                cursor_vertical_sfx.play()
+                    else:
+                        menu_open = False
+                        # Reset current_selection after handling the action
+                        current_selection = None
+                else:
+                    if dialogue_box.is_visible:
+                        dialogue_box.hide()
+                    # Open the menu if it's not already open
+                    menu_open = True
+                    menu_selection = 0  # Optionally reset the menu selection index
+                    current_selection = menu_options[menu_selection]  # Update current_selection based on menu_selection
+                    cursor_vertical_sfx.play()
+
             elif event.key == pygame.K_1:
                 debug_view_collision = not debug_view_collision
             elif event.key == pygame.K_2:
@@ -285,14 +311,14 @@ while running:
 
             if event.key == pygame.K_e:
                 print(f"{ness.x}, {ness.y}")
-                interacting_npc = check_interaction(ness, npcs)
-                cursor_horizontal_sfx.play()
-                if interacting_npc:
-                    if dialogue_box.is_visible:
-                        dialogue_box.hide()
-                    else:
-                        interacting_npc.interact()
-                        cursor_vertical_sfx.play()
+                # interacting_npc = check_interaction(ness, npcs)
+                # cursor_horizontal_sfx.play()
+                # if interacting_npc:
+                #     if dialogue_box.is_visible:
+                #         dialogue_box.hide()
+                #     else:
+                #         interacting_npc.interact()
+                #         cursor_vertical_sfx.play()
 
             if menu_open:
                 col = menu_selection % menu_columns
@@ -314,6 +340,7 @@ while running:
                 new_selection = row * menu_columns + col
                 # Ensure the new selection is within the bounds of the menu options
                 menu_selection = min(new_selection, len(menu_options) - 1)
+                current_selection = menu_options[menu_selection]  
 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LSHIFT:
@@ -330,6 +357,7 @@ while running:
         dy = -velocity
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         dy = velocity
+
 
     if not menu_open:
         ness.move(dx, dy, debug_disable_collision)
