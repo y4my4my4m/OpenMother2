@@ -1,9 +1,11 @@
 import pygame
 import random
 
+pygame.init()
 # fixme
 screen_width = 1280
 screen_height = 720
+cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 class BattleSystem:
     def __init__(self, screen, player, enemies):
         self.screen = screen
@@ -16,25 +18,24 @@ class BattleSystem:
     def start_battle(self):
         self.battle_active = True
         # Main battle loop
-        while self.battle_active:
-            self.screen.fill((0, 0, 0))  # Clear screen
-            self.draw(self.enemies[0]) 
-            # self.gui.draw(self.screen)  # Draw the GUI
-            pygame.display.flip()  # Update the display
+        # while self.battle_active:
+        #     self.screen.fill((0, 0, 0))  # Clear screen
+        #     self.draw(self.enemies[0])
+        #     # pygame.display.flip()  # Update the display
             
-            # Event handling simplified for demonstration
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    # Example key bindings for demo purposes
-                    if event.key == pygame.K_SPACE:
-                        self.player_turn()
-                        self.enemy_turn()
-                    elif event.key == pygame.K_ESCAPE:
-                        self.battle_active = False
+        #     # Event handling simplified for demonstration
+        #     for event in pygame.event.get():
+        #         if event.type == pygame.KEYDOWN:
+        #             # Example key bindings for demo purposes
+        #             if event.key == pygame.K_SPACE:
+        #                 self.player_turn()
+        #                 self.enemy_turn()
+        #             elif event.key == pygame.K_ESCAPE:
+        #                 self.battle_active = False
 
-            # Additional game loop logic here
-            self.check_battle_end()
-            pygame.time.wait(100)  # Short delay for demonstration
+        #     # # Additional game loop logic here
+        #     self.check_battle_end()
+        #     pygame.time.wait(100)  # Short delay for demonstration
 
     def draw(self, enemy):
         # Draw the enemy
@@ -42,6 +43,7 @@ class BattleSystem:
         # then center it in the screen
         self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
         # self.screen.blit(self.enemies[0].battle_sprite, (400, 200))
+
     def calculate_damage(self, attacker, defender):
         # Calculate critical hits and misses based on luck
         critical_chance = attacker.stats["luck"] - defender.stats["luck"] 
@@ -80,16 +82,22 @@ class BattleSystem:
     def end_battle(self):
         print("Battle ended.")
 
-
-class BattleEnvironment:
-    def __init__(self, background, player, enemies):
-        self.background = background
-        self.player = player
-        self.enemies = enemies
-        # self.background = pygame.image.load(background_image_path)
+class BattleMenu:
+    def __init__(self, font, menu_options):
+        self.menu_options = menu_options
+        self.current_selection = 0
+        self.font = font
 
     def draw(self, screen):
-        # screen.blit(self.background, (0, 0))
-        # draw a black rectangle to represent the background
-        # screen.fill((0, 0, 0))
-        pass
+        for i, option in enumerate(self.menu_options):
+            color = (255, 255, 255) if i == self.current_selection else (100, 100, 100)
+            text_surf = self.font.render(option, True, color)
+            screen.blit(text_surf, (50, 50 + i * 30))
+
+    def handle_input(self, key):
+        cursor_vertical_sfx.play()
+        if key == pygame.K_UP or key == pygame.K_w:
+            self.current_selection = (self.current_selection - 1) % len(self.menu_options)
+        elif key == pygame.K_DOWN or key == pygame.K_s:
+            self.current_selection = (self.current_selection + 1) % len(self.menu_options)
+        return self.current_selection

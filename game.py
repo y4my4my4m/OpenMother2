@@ -5,7 +5,7 @@ from npc import NPC
 from camera import Camera
 from utils.collision import load_collision_boxes
 from dialoguebox import DialogueBox
-from battle import BattleSystem
+from battle import BattleSystem, BattleMenu
 
 pygame.init()
 
@@ -87,6 +87,10 @@ npcs = [
     NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 2, "look_at_player", dialogue_box),
     NPC(1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 14, "look_at_player", dialogue_box)
 ]
+
+# Battle
+battle_menu_options = ["Attack", "Special", "Item", "Run"]
+battle_menu = BattleMenu(menu_font, battle_menu_options)
 
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
@@ -377,31 +381,57 @@ while running:
             camera.update(ness)
 
         draw_everything()
-
         draw_debug()
-
         draw_menu()
 
         interacting_npc = check_interaction(ness, npcs)
         if not interacting_npc:
             dialogue_box.hide()
         dialogue_box.draw(screen)
+
     elif game_state == GAME_STATE_BATTLE:
         pygame.mixer.music.load('assets/music/battle.mp3')
         pygame.mixer.music.play(-1)
+
         if battle_system is None or not battle_system.battle_active:
             battle_system = BattleSystem(screen, ness, [interacting_npc])
             battle_system.start_battle()
 
-        battle_system.update()  # Process logic for the current frame
-        battle_system.draw()    # Render the battle scene for the current frame
 
+
+
+        while battle_system.battle_active:
+            screen.fill((0, 0, 0))  # Clear screen
+            battle_system.draw(battle_system.enemies[0])
+            battle_menu.draw(screen)
+            pygame.display.flip()  # Update the display
+            # Handle events specifically for the battle state
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    # battle_system.battle_active = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_UP, pygame.K_DOWN):
+                        battle_menu.handle_input(event.key)
+                    elif event.key == pygame.K_RETURN:
+                        print(f"Selected action: {battle_menu_options[battle_menu.current_selection]}")
+                    elif event.key == pygame.K_SPACE:
+                        if (action := battle_menu_options[battle_menu.current_selection]) == "Attack":
+                            battle_system.player_turn()
+                            battle_system.enemy_turn()
+                    elif event.key == pygame.K_ESCAPE:
+                        battle_system.battle_active = False
+
+                    battle_menu.handle_input(event.key)
+            
+            # # Additional game loop logic here
+            battle_system.check_battle_end()
+            pygame.time.wait(100) 
+        
         if battle_system.check_battle_end():
             game_state = GAME_STATE_EXPLORATION  # Transition back
             battle_system = None  # Clean up for next battle
 
-    else:
-        pass
     # Update the display
     pygame.display.flip()
     clock.tick(FPS)
