@@ -1,10 +1,10 @@
 import pygame
 from character import Character
 from dialoguebox import DialogueBox
-
+from battle import BattleSystem
 class NPC(Character):
-    def __init__(self, x, y, width, height, filename, collision_boxes, dialogue, player, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
-        super().__init__(x, y, width, height, filename, collision_boxes)
+    def __init__(self, x, y, width, height, filename, collision_boxes, dialogue, player, hp, psi, is_enemy=False, inventory=None, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
+        super().__init__(x, y, width, height, filename, collision_boxes, hp, psi, inventory)
         self.dialogue = dialogue
         self.npc_index = npc_index  # This determines which NPC block to use
         self.direction = direction  # 0: up, 1: right, 2: down, 3: left
@@ -12,13 +12,26 @@ class NPC(Character):
         self.behaviour = behaviour
         self.player = player
         self.dialogue_box = dialogue_box
+        self.is_enemy = is_enemy 
+        self.battle_sprite_filename = 'assets/sprites/enemies/36.png'
+        self.battle_sprite = pygame.image.load(self.battle_sprite_filename).convert_alpha()
+        self.pending_battle = False
+
+    # def interact(self):
+    #     # This method is called when the player interacts with the NPC
+    #     # print(self.dialogue)
+
+    #     if self.dialogue_box:
+    #         self.dialogue_box.show_text(self.dialogue)
 
     def interact(self):
-        # This method is called when the player interacts with the NPC
-        # print(self.dialogue)
-
-        if self.dialogue_box:
-            self.dialogue_box.show_text(self.dialogue)
+        if self.is_enemy:
+            # Trigger battle sequence
+            print("Encountered an enemy! Starting battle...")
+            self.pending_battle = True
+        else:
+            # Standard NPC interaction
+            print(self.dialogue)
 
     def handle_behaviour(self):
         if self.behaviour == "idle":

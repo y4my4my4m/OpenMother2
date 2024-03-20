@@ -1,7 +1,7 @@
 import pygame
 
 class Character:
-    def __init__(self, x, y, width, height, filename, collision_boxes):
+    def __init__(self, x, y, width, height, filename, collision_boxes, hp, psi, inventory=None):
         self.x = x
         self.y = y
         self.width = width
@@ -18,7 +18,11 @@ class Character:
         self.frame_rate = 150  # milliseconds
         self.moving = False
         self.collision_boxes = collision_boxes  # Store collision data
-
+        # Battle
+        self.hp = hp
+        self.psi = psi
+        self.inventory = inventory if inventory is not None else {}
+      
     def make_transparent(self, image):
         # Set the color key to the top-left pixel's color, assuming it's the background
         transparent_color = image.get_at((0, 0))
@@ -106,3 +110,10 @@ class Character:
         elif dy > 0:
             self.direction = 0  # Down
 
+    def use_item(self, item):
+        # Item usage logic
+        pass
+
+    def cast_psi(self, psi_power):
+        # PSI power usage logic
+        pass
