@@ -19,19 +19,20 @@ class BattleSystem:
         self.battle_active = False
         self.bg = bg
         self.battle_log = BattleLog(pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24), screen_width, screen_height)
+        self.is_player_turn = True
+        self.flash_enemy_flag = False
 
     def start_battle(self):
         self.battle_active = True
         self.bg.prepare()
 
-    def draw(self, enemy):
-        # Draw the enemy
+    def draw_enemy(self, enemy):
+        self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
+   
+    def draw(self):
         self.bg.draw(self.screen)
         self.bg.update()
-        self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
-       
         self.battle_log.draw(self.screen)
-        # self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
 
     def calculate_damage(self, attacker, defender):
         # Calculate critical hits and misses based on luck
@@ -45,6 +46,8 @@ class BattleSystem:
         return max(damage, 1)  # Ensure minimum damage
 
     def player_turn(self):
+        if not self.is_player_turn:
+            return 
         print(f"{self.player.name}'s turn.")
         self.battle_log.add_message(f"{self.player.name} attacks!")
         # Implement player action choice here (attack, use item, PSI)
@@ -60,8 +63,12 @@ class BattleSystem:
             pygame.mixer.Sound('assets/sounds/miss.wav').play()
             print(f"{self.player.name} missed!")
             self.battle_log.add_message(f"{self.player.name} missed!")
+        self.is_player_turn = False
+        return True
 
     def enemy_turn(self):
+        if self.is_player_turn:
+            return
         print(f"{self.enemies[0].name}'s turn.")
         self.battle_log.add_message(f"{self.enemies[0].name}'s turn.")
         # Simple enemy behavior for demonstration
@@ -69,6 +76,7 @@ class BattleSystem:
         self.player.stats["hp"] -= damage
         print(f"{self.enemies[0].name} dealt {damage} damage!")
         self.battle_log.add_message(f"{self.enemies[0].name} dealt {damage} damage!")
+        self.is_player_turn = True
 
     def check_battle_end(self):
         if self.player.stats["hp"] <= 0:

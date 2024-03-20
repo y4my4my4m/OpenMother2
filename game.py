@@ -88,10 +88,10 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 # NPCs
 npcs = [
     NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
-    NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 36, True, None, 1, 9, "look_at_player", dialogue_box),
-    NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [50, 20, 30, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
-    NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 2, "look_at_player", dialogue_box),
-    NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
+    NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
+    NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
+    NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 36, True, None, 3, 2, "look_at_player", dialogue_box),
+    NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
 ]
 
 # Battle
@@ -415,9 +415,28 @@ while running:
 
         while battle_system.battle_active:
             screen.fill((0, 0, 0))  # Clear screen
-            battle_system.draw(battle_system.enemies[0])
+            battle_system.draw()
             battle_menu.draw(screen)
-            pygame.display.flip()  # Update the display
+            if battle_system.flash_enemy_flag:
+                original_sprite = battle_system.enemies[0].battle_sprite
+                for _ in range(3):  # Flash 3 times
+                    battle_system.enemies[0].battle_sprite = pygame.Surface((0, 0))  # Make sprite invisible
+
+                    screen.fill((0, 0, 0))  # Clear screen
+                    battle_system.draw()
+                    battle_menu.draw(screen)
+                    pygame.time.wait(100 // 3)
+                    
+                    battle_system.enemies[0].battle_sprite = original_sprite  # Restore sprite visibility
+
+                    screen.fill((0, 0, 0))  # Clear screen
+                    battle_system.draw()
+                    battle_menu.draw(screen)
+                    pygame.time.wait(100 // 3)
+                battle_system.flash_enemy_flag = False
+            else:
+                battle_system.draw_enemy(battle_system.enemies[0])
+            pygame.display.flip()
             # Handle events specifically for the battle state
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -433,13 +452,15 @@ while running:
                         if action == "Bash":
                             pygame.mixer.Sound('assets/sounds/attack1.wav').play()
                             # wait for the sound to finish
-                            battle_system.player_turn()
-                            battle_system.enemy_turn()
+                            hit = battle_system.player_turn()
+                            if hit:
+                                battle_system.flash_enemy_flag = True
                     elif event.key == pygame.K_ESCAPE:
                         battle_system.battle_active = False
 
                     battle_menu.handle_input(event.key)
             
+            battle_system.enemy_turn()
             # # Additional game loop logic here
             if battle_system.check_battle_end():
                 game_state = GAME_STATE_EXPLORATION
