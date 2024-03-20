@@ -55,8 +55,9 @@ pygame.init()
 pygame.display.set_mode((1, 1))
 
 # Define the image path and where to save the exported PNG files
-image_path = '../assets/sprites/enemies.png'
-export_path = 'tmp'
+# image_path = '../assets/sprites/enemies.png'
+image_path = '../assets/sprites/battle_backgrounds.png'
+export_path = '../assets/sprites/battle_backgrounds/'
 
 find_sprites_and_export(image_path, export_path)
 

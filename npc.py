@@ -3,7 +3,7 @@ from character import Character
 from dialoguebox import DialogueBox
 from battle import BattleSystem
 class NPC(Character):
-    def __init__(self, x, y, width, height, filename, collision_boxes, dialogue, player, stats, is_enemy=False, inventory=None, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
+    def __init__(self, x, y, width, height, filename, collision_boxes, dialogue, player, stats, battle_sprite_id, is_enemy=False, inventory=None, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
         super().__init__(x, y, width, height, filename, collision_boxes, stats, inventory)
         self.dialogue = dialogue
         self.npc_index = npc_index  # This determines which NPC block to use
@@ -13,7 +13,7 @@ class NPC(Character):
         self.player = player
         self.dialogue_box = dialogue_box
         self.is_enemy = is_enemy 
-        self.battle_sprite_filename = 'assets/sprites/enemies/36.png'
+        self.battle_sprite_filename = f'assets/sprites/enemies/{battle_sprite_id}.png'
         self.battle_sprite = pygame.image.load(self.battle_sprite_filename).convert_alpha()
         self.pending_battle = False
 

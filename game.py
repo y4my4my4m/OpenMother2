@@ -10,9 +10,11 @@ from battle import BattleSystem, BattleMenu
 pygame.init()
 
 # Screen Configuration
+FULLSCREEN = False
+
 screen_width = 1280
 screen_height = 720
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCREEN if FULLSCREEN else 0) | pygame.DOUBLEBUF)
 # detect screen resolution
 # infoObject = pygame.display.Info()
 # screen_width = infoObject.current_w
@@ -34,10 +36,10 @@ battle_system = None
 # Load assets
 dialogue_box = DialogueBox('assets/fonts/earthbound-menu-extended.ttf', 24, screen_width, screen_height)
 
-onett_layer0 = pygame.image.load('assets/maps/onett_layer0.png')
+onett_layer0 = pygame.image.load('assets/maps/onett_layer0.png').convert_alpha()
 map_layer0_rect = onett_layer0.get_rect()
 
-onett_layer1 = pygame.image.load('assets/maps/onett_layer1.png')
+onett_layer1 = pygame.image.load('assets/maps/onett_layer1.png').convert_alpha()
 map_layer1_rect = onett_layer1.get_rect()
 # tile_size = 32  # Change this to the size of your tiles
 # tiles_layer1 = [[onett_layer1.subsurface(pygame.Rect(x, y, tile_size, tile_size)) for x in range(0, onett_layer1.get_width() // tile_size * tile_size, tile_size)] for y in range(0, onett_layer1.get_height() // tile_size * tile_size, tile_size)]
@@ -84,11 +86,11 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], True, None, 3, 4, "look_at_player", dialogue_box),
-    NPC(1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], True, None, 1, 9, "look_at_player", dialogue_box),
-    NPC(1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 6, "look_at_player", dialogue_box),
-    NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 2, "look_at_player", dialogue_box),
-    NPC(1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], True, None, 3, 14, "look_at_player", dialogue_box)
+    NPC(1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 2, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC(1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 36, True, None, 1, 9, "look_at_player", dialogue_box),
+    NPC(1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [50, 20, 30, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
+    NPC(2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 2, "look_at_player", dialogue_box),
+    NPC(1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 30, 5, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
 ]
 
 # Battle

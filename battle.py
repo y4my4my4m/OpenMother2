@@ -39,10 +39,9 @@ class BattleSystem:
 
     def draw(self, enemy):
         # Draw the enemy
-        # scale up the battle sprite to make it more visible
-        # then center it in the screen
-        self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
-        # self.screen.blit(self.enemies[0].battle_sprite, (400, 200))
+        self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
+       
+        # self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
 
     def calculate_damage(self, attacker, defender):
         # Calculate critical hits and misses based on luck
@@ -102,3 +101,25 @@ class BattleMenu:
         elif key == pygame.K_DOWN or key == pygame.K_s:
             self.current_selection = (self.current_selection + 1) % len(self.menu_options)
         return self.current_selection
+
+
+background_types = [
+    "palette_cycling",
+    "background_scrolling",
+    "horizonttal_oscillation",
+    "vertical_oscillation",
+    "interleaved_oscillation",
+    "transparency"
+]
+
+class BattleBackground:
+    def __init__(self, filename, type):
+        self.image = pygame.image.load(filename).convert_alpha()
+        self.type = type
+
+    def draw(self, screen):
+        if self.type == "palette_cycling":
+            # Implement palette cycling effect
+            
+        screen.blit(self.image, (0, 0))
+    
