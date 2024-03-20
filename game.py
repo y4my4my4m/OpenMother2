@@ -54,8 +54,11 @@ camera = Camera(screen_width, screen_height, map_layer0_rect.width, map_layer0_r
 # camera.update(ness)  # Force the camera to center on Ness at startup
 
 # Music
-pygame.mixer.music.load('assets/music/onett_snes.mp3')
-# pygame.mixer.music.load('assets/music/battle.mp3')
+ONETT_MUSIC_PATH = 'assets/music/onett_snes.mp3'
+BATTLE_MUSIC_PATH = 'assets/music/battle.mp3'
+
+# Load and play exploration music by default
+pygame.mixer.music.load(ONETT_MUSIC_PATH)
 pygame.mixer.music.play(-1)
 
 # Menu
@@ -297,6 +300,8 @@ while running:
                             if interacting_npc:
                                 if interacting_npc.pending_battle:
                                     game_state = GAME_STATE_BATTLE
+                                    pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+                                    pygame.mixer.music.play(-1)
                                     interacting_npc.pending_battle = False
                                 if dialogue_box.is_visible:
                                     dialogue_box.hide()
@@ -390,15 +395,9 @@ while running:
         dialogue_box.draw(screen)
 
     elif game_state == GAME_STATE_BATTLE:
-        pygame.mixer.music.load('assets/music/battle.mp3')
-        pygame.mixer.music.play(-1)
-
         if battle_system is None or not battle_system.battle_active:
             battle_system = BattleSystem(screen, ness, [interacting_npc])
             battle_system.start_battle()
-
-
-
 
         while battle_system.battle_active:
             screen.fill((0, 0, 0))  # Clear screen
@@ -425,13 +424,13 @@ while running:
                     battle_menu.handle_input(event.key)
             
             # # Additional game loop logic here
-            battle_system.check_battle_end()
+            if battle_system.check_battle_end():
+                game_state = GAME_STATE_EXPLORATION
+                pygame.mixer.music.load(ONETT_MUSIC_PATH)
+                pygame.mixer.music.play(-1)
+                battle_system.end_battle()
             pygame.time.wait(100) 
         
-        if battle_system.check_battle_end():
-            game_state = GAME_STATE_EXPLORATION  # Transition back
-            battle_system = None  # Clean up for next battle
-
     # Update the display
     pygame.display.flip()
     clock.tick(FPS)

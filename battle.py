@@ -80,6 +80,7 @@ class BattleSystem:
         return False
 
     def end_battle(self):
+        self.battle_active = False
         print("Battle ended.")
 
 class BattleMenu:
