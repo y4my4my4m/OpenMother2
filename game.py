@@ -399,7 +399,7 @@ while running:
     elif game_state == GAME_STATE_BATTLE:
         if battle_system is None or not battle_system.battle_active:
             # battle_system = BattleSystem(screen, ness, [interacting_npc], 51, "background_scrolling")
-            battle_system = BattleSystem(screen, ness, [interacting_npc], 3, "palette_cycling")
+            battle_system = BattleSystem(screen, ness, [interacting_npc], 164, ['horizontal_oscillation', 'vertical_oscillation'])
             battle_system.start_battle()
 
         while battle_system.battle_active:

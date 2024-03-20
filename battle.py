@@ -1,6 +1,7 @@
 import pygame
 import random
 import numpy as np
+import math
 
 pygame.init()
 # fixme
@@ -25,29 +26,10 @@ class BattleSystem:
         self.bg = BattleBackground(f'assets/sprites/battle_backgrounds/{self.bg_image_id}.png', self.bg_type)
         self.bg.prepare()
 
-        # Main battle loop
-        # while self.battle_active:
-        #     self.screen.fill((0, 0, 0))  # Clear screen
-        #     self.draw(self.enemies[0])
-        #     # pygame.display.flip()  # Update the display
-            
-        #     # Event handling simplified for demonstration
-        #     for event in pygame.event.get():
-        #         if event.type == pygame.KEYDOWN:
-        #             # Example key bindings for demo purposes
-        #             if event.key == pygame.K_SPACE:
-        #                 self.player_turn()
-        #                 self.enemy_turn()
-        #             elif event.key == pygame.K_ESCAPE:
-        #                 self.battle_active = False
-
-        #     # # Additional game loop logic here
-        #     self.check_battle_end()
-        #     pygame.time.wait(100)  # Short delay for demonstration
-
     def draw(self, enemy):
         # Draw the enemy
         self.bg.draw(self.screen)
+        self.bg.update()
         self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
        
         # self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - 140))
@@ -104,11 +86,6 @@ class BattleMenu:
         self.menu_x, self.menu_y = 20, 20
 
     def draw(self, screen):
-        # for i, option in enumerate(self.menu_options):
-        #     color = (255, 255, 255) if i == self.current_selection else (100, 100, 100)
-        #     text_surf = self.font.render(option, True, color)
-        #     screen.blit(text_surf, (50, 50 + i * 30))
-        # Define menu properties
         # Draw menu
         pygame.draw.rect(screen, (0, 0, 0), (self.menu_x, self.menu_y, self.menu_width, self.menu_height))
         pygame.draw.rect(screen, (255, 255, 255), (self.menu_x, self.menu_y, self.menu_width, self.menu_height), 2)
@@ -172,10 +149,10 @@ background_types = [
 
 
 class BattleBackground:
-    def __init__(self, filename, effect_type):
+    def __init__(self, filename, effect_types):
         self.original_image = pygame.image.load(filename)
         self.image = self.original_image.copy()  # Work on a copy for manipulation
-        self.effect_type = effect_type
+        self.effect_types = effect_types
         self.palette = None
         self.palette_index = 0
 
@@ -185,26 +162,31 @@ class BattleBackground:
         self.scroll_speed_x = 2
         self.scroll_speed_y = 0
 
+        # For oscillation effect
+        self.oscillation_phase = 0
+
     def prepare(self):
-        if self.effect_type == "palette_cycling":
-            # Extract unique colors
-            arr = pygame.surfarray.array3d(self.original_image)
-            self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
-        elif self.effect_type == "background_scrolling":
-            arr = pygame.surfarray.array3d(self.original_image)
-            self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
-            self.scroll_x = 0
-            self.scroll_y = 0
+        arr = pygame.surfarray.array3d(self.original_image)
+        self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
     
+    def update(self):
+        # Update the oscillation phase for oscillation effects
+        self.oscillation_phase += 0.2
+
     def draw(self, screen):
-        if self.effect_type == "palette_cycling":
-            # Cycle the palette
-            self.palette = np.roll(self.palette, shift=-1, axis=0)
-            self.apply_palette_cycling()
-        elif self.effect_type == "background_scrolling":
-            self.palette = np.roll(self.palette, shift=-1, axis=0)
-            self.apply_palette_cycling()
-            # self.apply_background_scrolling(screen)
+        # Reset the image to the original before applying effects
+        self.image = self.original_image.copy()
+        
+        # Apply each effect in sequence
+        for effect_type in self.effect_types:
+            if effect_type == "palette_cycling":
+                self.apply_palette_cycling()
+            elif effect_type == "horizontal_oscillation":
+                self.apply_horizontal_oscillation()
+            elif effect_type == "vertical_oscillation":
+                self.apply_vertical_oscillation()
+        
+        # After applying effects, scale and blit to the screen
         screen.blit(pygame.transform.scale(self.image, (screen_width, screen_height)), (0, 0))
 
 
@@ -216,13 +198,36 @@ class BattleBackground:
             result_arr[(arr == self.palette[i]).all(axis=-1)] = self.palette[i + 1]
         pygame.surfarray.blit_array(self.image, result_arr)
 
-    def apply_background_scrolling(self, screen):
-        # Scroll the background
-        self.scroll_x = (self.scroll_x + self.scroll_speed_x) % self.image.get_width()
-        self.scroll_y = (self.scroll_y + self.scroll_speed_y) % self.image.get_height()
-        # Calculate the rectangle areas for the split
-        rect1 = pygame.Rect(self.scroll_x, self.scroll_y, self.image.get_width() - self.scroll_x, self.image.get_height() - self.scroll_y)
-        rect2 = pygame.Rect(0, 0, self.scroll_x, self.scroll_y)
-        # Blit the scrolled sections
-        screen.blit(self.image.subsurface(rect1), (0, 0))
-        screen.blit(self.image.subsurface(rect2), (rect1.width, rect1.height))
+    def apply_horizontal_oscillation(self):
+        """Applies a horizontal oscillation effect to the image pixels."""
+        # Convert the image to a NumPy array for manipulation
+        arr = pygame.surfarray.array3d(self.original_image)
+        oscillated_arr = np.zeros(arr.shape, dtype=np.uint8)
+
+        wave_amplitude = 10  # Max horizontal shift in pixels
+        wave_frequency = 0.1  # Frequency of the wave
+
+        # Apply the wave effect
+        for y in range(arr.shape[1]):
+            shift = int(wave_amplitude * math.sin(wave_frequency * y + self.oscillation_phase))
+            oscillated_arr[:, y, :] = np.roll(arr[:, y, :], shift, axis=0)
+
+        # Convert the manipulated array back to an image
+        pygame.surfarray.blit_array(self.image, oscillated_arr)
+
+    def apply_vertical_oscillation(self):
+        """Applies a vertical oscillation effect to the image pixels."""
+        # Convert the image to a NumPy array for manipulation
+        arr = pygame.surfarray.array3d(self.original_image)
+        oscillated_arr = np.zeros(arr.shape, dtype=np.uint8)
+
+        wave_amplitude = 10
+        wave_frequency = 0.1
+
+        # Apply the wave effect
+        for x in range(arr.shape[0]):
+            shift = int(wave_amplitude * math.sin(wave_frequency * x + self.oscillation_phase))
+            oscillated_arr[x, :, :] = np.roll(arr[x, :, :], shift, axis=0)
+
+        # Convert the manipulated array back to an image
+        pygame.surfarray.blit_array(self.image, oscillated_arr)
