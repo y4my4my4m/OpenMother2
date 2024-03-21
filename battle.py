@@ -274,7 +274,7 @@ class NumberRoulette:
         self.frame_height = 12  # Assuming each frame's height in the spritesheet
         self.frames = self.load_frames()
         self.digit_animations = []
-        self.frame_duration = 100
+        self.frame_duration = 50
         self.last_update_time = pygame.time.get_ticks()
 
     def load_frames(self):
@@ -308,39 +308,27 @@ class NumberRoulette:
         now = pygame.time.get_ticks()
         if now - self.last_update_time > self.frame_duration:
             self.last_update_time = now
-            need_update = False
+            for anim in list(self.digit_animations):  # Use a list copy for safe removal
+                if 'current' not in anim:
+                    anim['current'] = anim['start']  # Initialize 'current' with 'start' value if not present
 
-            # Prepare a list representation of the current and target values for easy manipulation
-            current_value_str = list(str(self.current_value).zfill(len(str(self.target_value))))
-            target_value_str = list(str(self.target_value).zfill(len(str(self.target_value))))
+                # Always "decrease" the current value and loop back if necessary
+                next_value = (anim['current'] - 1) % 10
+                anim['current'] = next_value
 
-            for anim in self.digit_animations:
-                current_digit_index = anim['index']
-                start_digit = anim['start']
-                end_digit = anim['end']
+                # Update the overall current value based on the individual digit animation
+                current_value_list = list(str(self.current_value).zfill(len(str(self.target_value))))
+                current_value_list[anim['index']] = str(anim['current'])
+                self.current_value = int("".join(current_value_list))
 
-                # Determine direction of animation based on start and end digits
-                direction = 1 if end_digit > start_digit or (start_digit == 9 and end_digit == 0) else -1
+                # Check if the animation for this digit should end
+                if ((anim['end'] >= anim['start'] and next_value == anim['end']) or 
+                    (anim['end'] < anim['start'] and (next_value == anim['end'] or anim['current'] == 0))):
+                    self.digit_animations.remove(anim)
 
-                # Calculate next digit considering the direction of animation
-                next_digit = (int(current_value_str[current_digit_index]) + direction) % 10
+            if not self.digit_animations:  # Ensure the target value is correctly set if no animations left
+                self.current_value = self.target_value
 
-                # Update the current digit in the string representation
-                current_value_str[current_digit_index] = str(next_digit)
-
-                # Determine if the animation for this digit is complete
-                if next_digit == end_digit:
-                    # Remove animation if complete
-                    anim['completed'] = True
-
-            # Update the current value after all digit animations have been processed
-            self.current_value = int("".join(current_value_str))
-
-            # Remove completed animations
-            self.digit_animations = [anim for anim in self.digit_animations if not anim.get('completed', False)]
-
-            # Determine if there are any animations left
-            self.animating = len(self.digit_animations) > 0
 
 
     def draw(self, screen):
