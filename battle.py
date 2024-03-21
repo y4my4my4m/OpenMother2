@@ -26,6 +26,8 @@ class BattleSystem:
         self.flash_enemy_flag = False
         self.player_alive = True
         self.battle_ongoing_flag = True
+        self.hp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["hp"], self.player.stats["hp"])
+        self.pp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["psi"], self.player.stats["psi"])
 
     def start_battle(self):
         self.battle_active = True
@@ -58,6 +60,13 @@ class BattleSystem:
         player_psi_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['psi']}", True, (0, 0, 0))
         self.screen.blit(player_psi_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 70, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75))
 
+        # In your game loop
+        # self.pp_roulette.update()
+
+        # Draw the roulettes
+        self.hp_roulette.draw(self.screen, screen_width // 2 - battle_hud_box.get_width() // 2 + 70, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75)
+        # self.pp_roulette.draw(self.screen, pp_x_position, pp_y_position)
+
 
     def calculate_damage(self, attacker, defender):
         # Calculate critical hits and misses based on luck
@@ -82,6 +91,7 @@ class BattleSystem:
             pygame.mixer.Sound('assets/sounds/miss.wav').play()
             self.battle_log.add_message(f"{attacker.name} missed!")
 
+        # pp_roulette.set_target_value(new_pp_value)
         return damage
 
 
@@ -107,6 +117,9 @@ class BattleSystem:
         else:
             pygame.mixer.Sound('assets/sounds/miss.wav').play()
             self.battle_log.add_message(f"{attacker.name} missed!")
+
+        self.hp_roulette.set_target_value(defender.stats["hp"] - damage)
+        self.hp_roulette.update()
 
         return damage
 
@@ -252,6 +265,55 @@ class BattleLog:
                 screen.blit(text_surface, (40, y_offset))
                 y_offset -= text_surface.get_height()  # Move up for the next message
 
+class NumberRoulette:
+    def __init__(self, spritesheet_path, current_value, target_value, frame_width=8, frame_height=12, numbers="0123456789 "):
+        self.spritesheet = pygame.image.load(spritesheet_path).convert_alpha()
+        self.frame_width = frame_width
+        self.frame_height = frame_height
+        self.numbers = numbers
+        self.frames = self.slice_spritesheet()
+        self.last_update_time = time.time()
+        self.animation_interval = 1.1  # Change the frame every 0.1 seconds
+        self.number_change_speed = 1.5  # Change the number every 0.5 seconds
+        self.current_value = current_value  # Example starting value
+        self.target_value = target_value  # Set this to trigger animation
+        self.animating = False  # Track whether we're currently animating
+
+    def slice_spritesheet(self):
+        frames = {}
+        num_frames_per_number = 4
+        for index, number in enumerate(self.numbers):
+            frames[number] = []
+            for frame in range(num_frames_per_number):
+                x = index * num_frames_per_number * self.frame_width + frame * self.frame_width
+                y = 0
+                frames[number].append(self.spritesheet.subsurface(x, y, self.frame_width, self.frame_height))
+        return frames
+
+    def set_target_value(self, value):
+        self.target_value = value
+
+    def update(self):
+        current_time = time.time()
+        print(self.current_value, self.target_value, self.animating)
+        if self.current_value != self.target_value:
+            self.animating = True
+            if current_time - self.last_update_time > self.number_change_speed:
+                if self.current_value > self.target_value:
+                    self.current_value -= 1  # Or adjust for finer control over the speed
+                self.last_update_time = current_time
+        else:
+            self.animating = False  # Stop animating
+
+    def draw(self, screen, x, y):
+        number_str = str(self.current_value)
+        for index, digit in enumerate(number_str):
+            frame_index = 0  # Default to the static frame
+            if self.animating:
+                frame_index = int((time.time() / self.animation_interval) % 4)
+            frame = self.frames[digit][frame_index]
+            frame = pygame.transform.scale(frame, (self.frame_width * 2, self.frame_height * 2))
+            screen.blit(frame, (x + index * self.frame_width * 2, y))
 
 class BattleBackground:
     def __init__(self, filename, effect_types, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
