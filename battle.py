@@ -2,6 +2,7 @@ import pygame
 import random
 import numpy as np
 import math
+import time
 
 pygame.init()
 # fixme
@@ -249,10 +250,21 @@ class BattleLog:
 class BattleBackground:
     def __init__(self, filename, effect_types, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
         self.original_image = pygame.image.load(filename)
-        self.image = pygame.transform.scale(self.original_image.copy(), (screen_width, screen_height))  # Work on a copy for manipulation
+        
+        # background_scrolling will be transformed
+        # self.image = pygame.transform.scale(self.original_image.copy(), (screen_width, screen_height))  # Work on a copy for manipulation
+
+        # background_scrolling with be HD
+        # self.image = self.original_image.copy()
+
+        self.image = pygame.transform.scale(self.original_image.copy(), (screen_width//1.6, screen_height//.9))
         self.effect_types = effect_types
+
+        # For palette cycling effect
         self.palette = None
         self.palette_index = 0
+        self.last_palette_update_time = time.time()
+        self.palette_update_interval = 0.05
 
         # For scrolling effect
         self.scroll_x = scroll_x
@@ -264,13 +276,18 @@ class BattleBackground:
         self.oscillation_vertical_phase = 0
         self.oscillation_horizontal_phase = 0
 
+
     def prepare(self):
         arr = pygame.surfarray.array3d(self.original_image)
         self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
         self.prepare_palette(self.original_image)
     
     def update(self):
-        # Update the oscillation phase for oscillation effects
+
+        current_time = time.time()
+        if current_time - self.last_palette_update_time > self.palette_update_interval:
+            self.shift_palette()
+            self.last_palette_update_time = current_time
         self.oscillation_vertical_phase += 0.1
         self.oscillation_horizontal_phase += 0.2
 
@@ -306,8 +323,9 @@ class BattleBackground:
         self.palette = np.roll(self.palette, shift=-1, axis=0)
 
     def apply_shifted_palette(self, image):
-        if pygame.time.get_ticks() % 3 == 0:
-            self.shift_palette()
+        # only apply shift it palette has more than 4 colors
+        if self.palette_size < 4:
+            self.palette_update_interval = 0.2
         # Ensure the operation is compatible with the image size
         original_size = image.get_size()
         # Assuming the inverse palette indices map directly corresponds to the image pixels
