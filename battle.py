@@ -300,6 +300,7 @@ class NumberRoulette:
         } for i in range(len(target_str))]
 
     def animate_digits(self):
+        self.current_value = self.target_value
         for i in range(len(self.animation_state) - 1, -1, -1):  # Start from the rightmost digit
             digit_info = self.animation_state[i]
             if digit_info['digit'] != digit_info['target']:
@@ -316,18 +317,18 @@ class NumberRoulette:
                             digit_info['animating'] = False  # Stop animating when target reached
                     break  # Ensure only one digit updates per cycle
 
-    def check_completion(self):
-        if all(digit_info['digit'] == digit_info['target'] for digit_info in self.animation_state):
-            self.current_value = self.target_value
-            for digit_info in self.animation_state:  # Stop all animations
-                digit_info['animating'] = False
+    # def check_completion(self):
+    #     if all(digit_info['digit'] == digit_info['target'] for digit_info in self.animation_state):
+    #         self.current_value = self.target_value
+    #         for digit_info in self.animation_state:  # Stop all animations
+    #             digit_info['animating'] = False
 
     def update(self):
         now = pygame.time.get_ticks()
         if now - self.last_update_time > self.frame_duration:
             self.last_update_time = now
             self.animate_digits()
-            self.check_completion()
+            # self.check_completion()
 
     def draw(self, screen, x, y):
         self.update()
