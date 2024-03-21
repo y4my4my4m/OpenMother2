@@ -23,13 +23,15 @@ class BattleSystem:
         self.is_player_turn = True
         self.flash_enemy_flag = False
         self.player_alive = True
+        self.battle_ongoing_flag = True
 
     def start_battle(self):
         self.battle_active = True
         self.bg.prepare()
 
     def draw_enemy(self, enemy):
-        self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
+        if self.battle_ongoing_flag:
+            self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
    
     def draw(self):
         self.bg.draw(self.screen)
@@ -62,7 +64,7 @@ class BattleSystem:
             pygame.mixer.Sound('assets/sounds/bash.wav').play()
             damage = attacker.stats["attack"] - random.randint(0, defender.stats["defense"])
     
-        damage = max(damage, 1)  # Ensure minimum damage
+        damage = max(damage, 0)  # Ensure minimum damage
         if damage > 0:
             if critical_hit:
                 self.battle_log.add_message(f"{attacker.name} dealt {damage} critical damage!")
@@ -88,7 +90,7 @@ class BattleSystem:
             pygame.mixer.Sound('assets/sounds/enemyhit.wav').play()
             damage = attacker.stats["attack"] - random.randint(0, defender.stats["defense"])
     
-        # damage = max(damage, 1)  # Ensure minimum damage
+        damage = max(damage, 0)  # Ensure minimum damage
         if damage > 0:
             if critical_hit:
                 self.battle_log.add_message(f"{attacker.name} dealt {damage} critical damage!")
@@ -101,16 +103,18 @@ class BattleSystem:
 
         return damage
 
-    def player_turn(self):
-        if not self.is_player_turn:
-            return 
-        self.battle_log.add_message(f"{self.player.name}'s turn")
+    def player_command(self, action):
         # attacks by default
         self.battle_log.add_message(f"{self.player.name} attacks!")
         damage = self.calculate_damage(self.player, self.enemies[0])
         self.enemies[0].stats["hp"] -= damage
         self.is_player_turn = False
         return True
+
+    def player_turn(self):
+        if not self.is_player_turn:
+            return 
+        self.battle_log.add_message(f"{self.player.name}'s turn")
 
     def enemy_turn(self):
         if self.is_player_turn:
@@ -125,22 +129,28 @@ class BattleSystem:
 
     def check_battle_end(self):
         if self.player.stats["hp"] <= 0:
-            self.battle_log.add_message(f"{self.player.name} defeated!")
-            pygame.mixer.Sound('assets/sounds/die.wav').play()
-            self.player_alive = False
             return True
         elif all(enemy.stats["hp"] <= 0 for enemy in self.enemies):
-            self.battle_log.add_message(f"{self.enemies[0].name} defeated!")
-            pygame.mixer.Sound('assets/sounds/enemydie.wav').play()
             return True
         return False
 
     def end_battle(self):
-        self.battle_active = False
-        if not self.player_alive:
-            print(f"{self.player.name} defeated!")
-            pygame.mixer.Sound('assets/sounds/die.wav').play()
-        print("Battle ended.")
+        if self.battle_ongoing_flag:
+            if self.player_alive:
+                self.battle_log.add_message(f"{self.enemies[0].name} defeated!")
+                pygame.mixer.Sound('assets/sounds/enemydie.wav').play()
+                pygame.time.delay(200)
+                pygame.mixer.music.load('assets/music/win.mp3')
+                pygame.mixer.music.play(-1)
+                self.battle_log.add_message("You won!")
+                self.battle_ongoing_flag = False
+
+            else:
+                self.battle_log.add_message(f"{player.name} passed out!")
+                self.player_alive = False
+                pygame.mixer.Sound('assets/sounds/die.wav').play()
+                self.battle_ongoing_flag = False
+
 
 class BattleMenu:
     def __init__(self, font, menu_options):
@@ -226,6 +236,10 @@ class BattleLog:
                 smash_image = pygame.image.load('assets/sprites/smash.png')
                 screen.blit(smash_image, (40, y_offset + 10))
                 y_offset -= smash_image.get_height() + 10
+            elif message == "You won!":
+                victory_image = pygame.image.load('assets/sprites/you_won.png')
+                screen.blit(victory_image, (40, y_offset + 16))
+                y_offset -= victory_image.get_height() + 10
             else:
                 text_surface = self.font.render(message, True, (255, 255, 255))
                 screen.blit(text_surface, (40, y_offset))

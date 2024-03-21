@@ -88,7 +88,7 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [55, 10, 3, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [15, 10, 3, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
     NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
     NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
@@ -414,7 +414,7 @@ while running:
         dialogue_box.draw(screen)
 
     elif game_state == GAME_STATE_BATTLE:
-        print(interacting_npc.name)
+
         if battle_system is None or not battle_system.battle_active:
             # battle_system = BattleSystem(screen, ness, [interacting_npc], 51, "background_scrolling")
             battle_effects = []
@@ -432,7 +432,8 @@ while running:
         while battle_system.battle_active:
             screen.fill((0, 0, 0))  # Clear screen
             battle_system.draw()
-            battle_menu.draw(screen)
+            if battle_system.battle_ongoing_flag:
+                battle_menu.draw(screen)
             if battle_system.flash_enemy_flag:
                 original_sprite = battle_system.enemies[0].battle_sprite
                 for _ in range(3):  # Flash 3 times
@@ -465,37 +466,42 @@ while running:
                     running = False
                     # battle_system.battle_active = False
                 elif event.type == pygame.KEYDOWN:
+                    if not battle_system.battle_ongoing_flag:
+                        if battle_system.player_alive:
+                            game_state = GAME_STATE_EXPLORATION
+                            pygame.mixer.music.load(ONETT_MUSIC_PATH)
+                            pygame.mixer.music.play(-1)
+                            battle_system.battle_active = False
+                            break
+                        else:
+                            game_state = GAME_STATE_GAMEOVER
+                            pygame.mixer.music.load('assets/music/gameover.mp3')
+                            pygame.mixer.music.play(-1)
+                            battle_system.battle_active = False
+                            break
                     if event.key in (pygame.K_UP, pygame.K_DOWN):
                         battle_menu.handle_input(event.key)
-                    elif event.key == pygame.K_RETURN:
-                        print(f"Selected action: {battle_menu_options[battle_menu.current_selection]}")
                     elif event.key == pygame.K_SPACE:
-                        action = battle_menu_options[battle_menu.menu_selection]
-                        if action == "Bash":
-                            pygame.mixer.Sound('assets/sounds/attack1.wav').play()
-                            # wait for the sound to finish
-                            hit = battle_system.player_turn()
-                            if hit:
-                                battle_system.flash_enemy_flag = True
+                        if battle_system.is_player_turn:
+                            action = battle_menu_options[battle_menu.menu_selection]
+                            if action == "Bash":
+                                hit = battle_system.player_command(action)
+                                if hit:
+                                    pygame.mixer.Sound('assets/sounds/attack1.wav').play()
+                                    # battle_system.player_turn()
+                                    battle_system.flash_enemy_flag = True
+                        elif not battle_system.is_player_turn:
+                            battle_system.enemy_turn()
+
                     elif event.key == pygame.K_ESCAPE:
                         battle_system.battle_active = False
 
                     battle_menu.handle_input(event.key)
-            
-            battle_system.enemy_turn()
-            # # Additional game loop logic here
+
             if battle_system.check_battle_end():
-                game_state = GAME_STATE_EXPLORATION
-                pygame.mixer.music.load(ONETT_MUSIC_PATH)
-                pygame.mixer.music.play(-1)
                 battle_system.end_battle()
-                if not battle_system.player_alive:
-                    print("Player lost the battle!")
-                    pygame.mixer.music.load('assets/music/gameover.mp3')
-                    pygame.mixer.music.play(-1)
-                    game_state = GAME_STATE_GAMEOVER
-            pygame.time.wait(100) 
-        
+            pygame.time.wait(100)
+    
     elif game_state == GAME_STATE_GAMEOVER:
         scaled_gameover_image = pygame.transform.scale(gameover_image, (screen_width, screen_height))
         screen.blit(scaled_gameover_image, (0, 0))
