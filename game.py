@@ -48,7 +48,7 @@ map_layer1_rect = onett_layer1.get_rect()
 collision_boxes = load_collision_boxes('assets/maps/onett_layer1_collision_boxes.json')
 
 # Character
-ness_stats = [874, 10, 5, 3, 4, 2]
+ness_stats = [874, 10, 5, 3, 4, 7]
 ness = Character("Ness", 1000, 1500, 16, 24, 'assets/sprites/ness_normal.png', collision_boxes, ness_stats)  
 velocity = 1
 

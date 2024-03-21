@@ -27,7 +27,7 @@ class BattleSystem:
         self.player_alive = True
         self.battle_ongoing_flag = True
         self.hp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["hp"])
-        # self.pp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["psi"])
+        self.pp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["psi"])
 
     def start_battle(self):
         self.battle_active = True
@@ -60,13 +60,9 @@ class BattleSystem:
         player_psi_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['psi']}", True, (0, 0, 0))
         self.screen.blit(player_psi_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75))
 
-        # In your game loop
-        # self.hp_roulette.update()
-        # self.pp_roulette.update()
-
         # Draw the roulettes
-        self.hp_roulette.draw(self.screen)
-        # self.pp_roulette.draw(self.screen, pp_x_position, pp_y_position)
+        self.hp_roulette.draw(self.screen, (screen_width // 2) + 22, screen_height - 118)
+        self.pp_roulette.draw(self.screen, (screen_width // 2) + 38, screen_height - 86)
 
 
     def calculate_damage(self, attacker, defender):
@@ -92,7 +88,6 @@ class BattleSystem:
             pygame.mixer.Sound('assets/sounds/miss.wav').play()
             self.battle_log.add_message(f"{attacker.name} missed!")
 
-        # pp_roulette.set_target_value(new_pp_value)
         return damage
 
 
@@ -255,95 +250,92 @@ class BattleLog:
         for message in reversed(self.messages):
             if message == "Smaaash!":
                 smash_image = pygame.image.load('assets/sprites/smash.png')
-                screen.blit(smash_image, (40, y_offset + 10))
-                y_offset -= smash_image.get_height() + 10
+                smash_image = pygame.transform.scale(smash_image, (smash_image.get_width() * 2, smash_image.get_height() * 2))
+                screen.blit(smash_image, (36, y_offset))
+                y_offset -= smash_image.get_height()
             elif message == "You won!":
                 victory_image = pygame.image.load('assets/sprites/you_won.png')
-                screen.blit(victory_image, (40, y_offset + 16))
-                y_offset -= victory_image.get_height() + 10
+                victory_image = pygame.transform.scale(victory_image, (victory_image.get_width() * 2, victory_image.get_height() * 2))
+                screen.blit(victory_image, (36, y_offset))
+                y_offset -= victory_image.get_height() + 4
             else:
                 text_surface = self.font.render(message, True, (255, 255, 255))
                 screen.blit(text_surface, (40, y_offset))
                 y_offset -= text_surface.get_height()  # Move up for the next message
+
 class NumberRoulette:
     def __init__(self, spritesheet_path, current_value):
         self.spritesheet = pygame.image.load(spritesheet_path).convert_alpha()
         self.current_value = current_value
         self.target_value = current_value
-        self.frame_width = 8  # Assuming each frame's width in the spritesheet
-        self.frame_height = 12  # Assuming each frame's height in the spritesheet
+        self.frame_width = 8
+        self.frame_height = 12
         self.frames = self.load_frames()
-        self.digit_animations = []
+        self.animation_state = []
         self.frame_duration = 50
         self.last_update_time = pygame.time.get_ticks()
+        self.prepare_animation_state()
 
     def load_frames(self):
         frames = {str(n): [] for n in range(10)}
         for n in range(10):
-            for frame in range(5):
+            for frame in range(4):  # Assuming 4 frames per digit for the animation
                 x = frame * self.frame_width + n * (self.frame_width * 4)
                 y = 0
-                rect = pygame.Rect(x, y, self.frame_width, self.frame_height)
-                frames[str(n)].append(self.spritesheet.subsurface(rect))
+                frames[str(n)].append(self.spritesheet.subsurface(pygame.Rect(x, y, self.frame_width, self.frame_height)))
         return frames
 
     def set_target_value(self, value):
         self.target_value = value
-        self.prepare_digit_animations()
+        self.prepare_animation_state()
 
-    def prepare_digit_animations(self):
-        self.digit_animations.clear()
-        target_str = str(self.target_value).zfill(len(str(self.target_value)))
-        current_str = str(self.current_value).zfill(len(target_str))
-        for i in range(len(target_str)):
-            if current_str[i] != target_str[i]:
-                self.digit_animations.append({
-                    'index': i,
-                    'start': int(current_str[i]),
-                    'end': int(target_str[i]),
-                    'current_frame': 0
-                })
+    def prepare_animation_state(self):
+        target_str = str(self.target_value).zfill(len(str(self.current_value)))
+        self.current_value_str = str(self.current_value).zfill(len(target_str))
+        self.animation_state = [{
+            'digit': int(self.current_value_str[i]),
+            'target': int(target_str[i]),
+            'frame': 0,
+            'animating': False
+        } for i in range(len(target_str))]
+
+    def animate_digits(self):
+        for i in range(len(self.animation_state) - 1, -1, -1):  # Start from the rightmost digit
+            digit_info = self.animation_state[i]
+            if digit_info['digit'] != digit_info['target']:
+                if not any(d['animating'] for d in self.animation_state[i+1:]):  # No right-hand digit is animating
+                    digit_info['animating'] = True
+                    digit_info['frame'] = (digit_info['frame'] - 1) % 4
+                    if digit_info['frame'] == 0:  # Full cycle completed
+                        next_digit = (digit_info['digit'] - 1) % 10
+                        if next_digit > digit_info['digit']:  # Rolled over
+                            if i > 0:  # Prevent index error
+                                self.animation_state[i - 1]['animating'] = True  # Trigger left-hand digit animation
+                        digit_info['digit'] = next_digit
+                        if digit_info['digit'] == digit_info['target']:
+                            digit_info['animating'] = False  # Stop animating when target reached
+                    break  # Ensure only one digit updates per cycle
+
+    def check_completion(self):
+        if all(digit_info['digit'] == digit_info['target'] for digit_info in self.animation_state):
+            self.current_value = self.target_value
+            for digit_info in self.animation_state:  # Stop all animations
+                digit_info['animating'] = False
 
     def update(self):
         now = pygame.time.get_ticks()
         if now - self.last_update_time > self.frame_duration:
             self.last_update_time = now
-            for anim in list(self.digit_animations):  # Use a list copy for safe removal
-                if 'current' not in anim:
-                    anim['current'] = anim['start']  # Initialize 'current' with 'start' value if not present
+            self.animate_digits()
+            self.check_completion()
 
-                # Always "decrease" the current value and loop back if necessary
-                next_value = (anim['current'] - 1) % 10
-                anim['current'] = next_value
-
-                # Update the overall current value based on the individual digit animation
-                current_value_list = list(str(self.current_value).zfill(len(str(self.target_value))))
-                current_value_list[anim['index']] = str(anim['current'])
-                self.current_value = int("".join(current_value_list))
-
-                # Check if the animation for this digit should end
-                if ((anim['end'] >= anim['start'] and next_value == anim['end']) or 
-                    (anim['end'] < anim['start'] and (next_value == anim['end'] or anim['current'] == 0))):
-                    self.digit_animations.remove(anim)
-
-            if not self.digit_animations:  # Ensure the target value is correctly set if no animations left
-                self.current_value = self.target_value
-
-
-
-    def draw(self, screen):
+    def draw(self, screen, x, y):
         self.update()
-        value_str = str(self.current_value).zfill(len(str(self.target_value)))
-        for i, digit in enumerate(value_str):
-            frame = 0
-            for anim in self.digit_animations:
-                if anim['index'] == i:
-                    frame = anim['current_frame']
-                    break
-            digit_frame = self.frames[digit][frame]
+        for i, anim in enumerate(self.animation_state):
+            digit_frame = self.frames[str(anim['digit'])][anim['frame']]
             scaled_digit_frame = pygame.transform.scale(digit_frame, (self.frame_width * 2, self.frame_height * 2))
-            # screen.blit(scaled_digit_frame, ((screen_width // 2) + 38 + i * self.frame_width * 2, screen_height - 118))
-            screen.blit(scaled_digit_frame, ((screen_width // 2) + 22 + i * self.frame_width * 2, screen_height - 118))
+            screen.blit(scaled_digit_frame, (x + i * self.frame_width * 2, y))
+
 
 class BattleBackground:
     def __init__(self, filename, effect_types, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
