@@ -417,18 +417,31 @@ while running:
 
         if battle_system is None or not battle_system.battle_active:
             battle_effects = []
-            effects = ["interleaved_oscillation", "palette_cycling"]
+            # effects = ["interleaved_oscillation", "palette_cycling"]
             # effects = ["palette_cycling"]
-            # effects = ["horizontal_oscillation", "vertical_oscillation", "interleaved_oscillation", "palette_cycling", "background_scrolling"]
+            effects = ["horizontal_oscillation", "vertical_oscillation", "interleaved_oscillation", "palette_cycling", "background_scrolling"]
             battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
             scroll_x=random.randint(0,1)
             scroll_y=random.randint(0,1)
             scroll_speed_x=random.randint(-3,3)
             scroll_speed_y=random.randint(-3,3)
+            background_id = random.randint(1,327)
             print(battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
-            battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{random.randint(1,327)}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
+            battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
+            
+            battle_background_tfx = None
+            if random.randint(0, 100) < 50:
+                print("tfx")
+                effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
+                battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
+                scroll_x=random.randint(0,1)
+                scroll_y=random.randint(0,1)
+                scroll_speed_x=random.randint(-3,3)
+                scroll_speed_y=random.randint(-3,3)
+                battle_background_tfx = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
+
             battle_log = BattleLog(menu_font, screen_width, screen_height)
-            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log)
+            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log, battle_background_tfx)
             battle_system.start_battle()
 
         while battle_system.battle_active:

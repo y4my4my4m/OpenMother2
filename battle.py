@@ -12,7 +12,7 @@ cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 battle_hud_box = pygame.image.load('assets/sprites/battle_hud_box.png')
 class BattleSystem:
-    def __init__(self, screen, player, enemies, bg, log):
+    def __init__(self, screen, player, enemies, bg, log, bg_tfx=None):
         self.screen = screen
         self.player = player
         self.enemies = enemies
@@ -20,6 +20,7 @@ class BattleSystem:
         self.current_turn = 'player'
         self.battle_active = False
         self.bg = bg
+        self.bg_tfx = bg_tfx
         self.battle_log = log
         self.is_player_turn = True
         self.flash_enemy_flag = False
@@ -29,6 +30,8 @@ class BattleSystem:
     def start_battle(self):
         self.battle_active = True
         self.bg.prepare()
+        if (self.bg_tfx):
+            self.bg_tfx.prepare()
 
     def draw_enemy(self, enemy):
         if self.battle_ongoing_flag:
@@ -37,6 +40,9 @@ class BattleSystem:
     def draw(self):
         self.bg.draw(self.screen)
         self.bg.update()
+        if (self.bg_tfx):
+            self.bg_tfx.draw(self.screen, True)
+            self.bg_tfx.update()
         self.battle_log.draw(self.screen)
         self.draw_hud()
 
@@ -292,7 +298,7 @@ class BattleBackground:
         self.oscillation_horizontal_phase += 0.2
         self.oscillation_phase += 0.1
 
-    def draw(self, screen):
+    def draw(self, screen, transparent=False):
         # Start with the original image for each frame to ensure effects don't permanently alter it
         image_for_frame = self.original_image.copy()
 
@@ -310,7 +316,11 @@ class BattleBackground:
             image_for_frame = self.apply_interleaved_oscillation(image_for_frame)
 
         # Scale and blit the final image to the screen
+        if (transparent):
+            image_for_frame.set_colorkey((0, 0, 0))
+            image_for_frame.set_alpha(128)
         screen.blit(pygame.transform.scale(image_for_frame, (screen_width, screen_height)), (0, 0))
+        
 
     def prepare_palette(self, image):
         # Convert image to an array and flatten the array
