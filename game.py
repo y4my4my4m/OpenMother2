@@ -420,10 +420,10 @@ while running:
             battle_effects = []
             effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
             battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
-            scroll_x=random.randint(-1,1)
-            scroll_y=random.randint(-1,1)
-            scroll_speed_x=random.randint(0,3)
-            scroll_speed_y=random.randint(0,3)
+            scroll_x=random.randint(0,1)
+            scroll_y=random.randint(0,1)
+            scroll_speed_x=random.randint(-3,3)
+            scroll_speed_y=random.randint(-3,3)
             battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{random.randint(1,327)}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
             battle_log = BattleLog(menu_font, screen_width, screen_height)
             battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log)

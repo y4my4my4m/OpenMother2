@@ -249,7 +249,7 @@ class BattleLog:
 class BattleBackground:
     def __init__(self, filename, effect_types, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
         self.original_image = pygame.image.load(filename)
-        self.image = self.original_image.copy()  # Work on a copy for manipulation
+        self.image = pygame.transform.scale(self.original_image.copy(), (screen_width, screen_height))  # Work on a copy for manipulation
         self.effect_types = effect_types
         self.palette = None
         self.palette_index = 0
@@ -331,25 +331,28 @@ class BattleBackground:
         return image
 
     def apply_background_scrolling(self, image):
-        arr = pygame.surfarray.array3d(image)
-        scrolled_arr = np.zeros_like(arr)
+        # Create a new surface to hold the tiled background
+        tiled_surface = pygame.Surface((screen_width, screen_height))
 
-        self.scroll_x = (self.scroll_x + self.scroll_speed_x * self.scroll_x) % arr.shape[0]
-        self.scroll_y = (self.scroll_y + self.scroll_speed_y * self.scroll_y) % arr.shape[1]
+        # Calculate the number of times the image needs to be drawn to cover the screen
+        num_tiles_x = int(np.ceil(screen_width / self.image.get_width())) + 1
+        num_tiles_y = int(np.ceil(screen_height / self.image.get_height())) + 1
 
-        # Horizontal Scrolling
-        if self.scroll_x != 0:
-            part1_x = self.scroll_x
-            part2_x = arr.shape[0] - self.scroll_x
-            scrolled_arr[:part2_x] = arr[part1_x:]
-            scrolled_arr[part2_x:] = arr[:part1_x]
+        # Update the scroll position
+        self.scroll_x += self.scroll_speed_x
+        self.scroll_y += self.scroll_speed_y
 
-        # Vertical Scrolling
-        if self.scroll_y != 0:
-            part1_y = self.scroll_y
-            part2_y = arr.shape[1] - self.scroll_y
-            scrolled_arr[:, :part2_y] = scrolled_arr[:, part1_y:]
-            scrolled_arr[:, part2_y:] = scrolled_arr[:, :part1_y]
+        # Ensure scroll wraps correctly
+        self.scroll_x %= self.image.get_width()
+        self.scroll_y %= self.image.get_height()
 
-        pygame.surfarray.blit_array(image, scrolled_arr)
-        return image
+        # Draw the image at each tile position to cover the screen
+        for x_tile in range(num_tiles_x):
+            for y_tile in range(num_tiles_y):
+                draw_x = x_tile * self.image.get_width() - self.scroll_x
+                draw_y = y_tile * self.image.get_height() - self.scroll_y
+                tiled_surface.blit(self.image, (draw_x, draw_y))
+
+        # Instead of converting to an array and back, simply return the tiled surface
+        return tiled_surface
+
