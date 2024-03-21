@@ -65,16 +65,13 @@ class BattleSystem:
         damage = max(damage, 1)  # Ensure minimum damage
         if damage > 0:
             if critical_hit:
-                print(f"{attacker.name} dealt {damage} critical damage!")
                 self.battle_log.add_message(f"{attacker.name} dealt {damage} critical damage!")
                 self.battle_log.add_message("Smaaash!")
             else:
-                print(f"{self.player.name} dealt {damage} damage!")
-                self.battle_log.add_message(f"{self.player.name} dealt {damage} damage!")
+                self.battle_log.add_message(f"{attacker.name} dealt {damage} damage!")
         else:
             pygame.mixer.Sound('assets/sounds/miss.wav').play()
-            print(f"{self.player.name} missed!")
-            self.battle_log.add_message(f"{self.player.name} missed!")
+            self.battle_log.add_message(f"{attacker.name} missed!")
 
         return damage
 
@@ -91,29 +88,25 @@ class BattleSystem:
             pygame.mixer.Sound('assets/sounds/enemyhit.wav').play()
             damage = attacker.stats["attack"] - random.randint(0, defender.stats["defense"])
     
-        damage = max(damage, 1)  # Ensure minimum damage
+        # damage = max(damage, 1)  # Ensure minimum damage
         if damage > 0:
             if critical_hit:
-                print(f"{attacker.name} dealt {damage} critical damage!")
                 self.battle_log.add_message(f"{attacker.name} dealt {damage} critical damage!")
                 self.battle_log.add_message("Smaaash!")
             else:
-                print(f"{self.player.name} dealt {damage} damage!")
-                self.battle_log.add_message(f"{self.player.name} dealt {damage} damage!")
+                self.battle_log.add_message(f"{attacker.name} dealt {damage} damage!")
         else:
             pygame.mixer.Sound('assets/sounds/miss.wav').play()
-            print(f"{self.player.name} missed!")
-            self.battle_log.add_message(f"{self.player.name} missed!")
+            self.battle_log.add_message(f"{attacker.name} missed!")
 
         return damage
 
     def player_turn(self):
         if not self.is_player_turn:
             return 
-        print(f"{self.player.name}'s turn.")
+        self.battle_log.add_message(f"{self.player.name}'s turn")
+        # attacks by default
         self.battle_log.add_message(f"{self.player.name} attacks!")
-        # Implement player action choice here (attack, use item, PSI)
-        # For simplicity, let's assume an attack action
         damage = self.calculate_damage(self.player, self.enemies[0])
         self.enemies[0].stats["hp"] -= damage
         self.is_player_turn = False
@@ -123,24 +116,20 @@ class BattleSystem:
         if self.is_player_turn:
             return
         pygame.mixer.Sound('assets/sounds/enemyattack.wav').play()
-        print(f"{self.enemies[0].name}'s turn.")
         self.battle_log.add_message(f"{self.enemies[0].name}'s turn.")
-        # Simple enemy behavior for demonstration
+        # attacks by default
+        self.battle_log.add_message(f"{self.enemies[0].name} attacks!")
         damage = self.calculate_damage_enemy(self.enemies[0], self.player)
         self.player.stats["hp"] -= damage
-        print(f"{self.enemies[0].name} dealt {damage} damage!")
-        self.battle_log.add_message(f"{self.enemies[0].name} dealt {damage} damage!")
         self.is_player_turn = True
 
     def check_battle_end(self):
         if self.player.stats["hp"] <= 0:
-            print(f"{self.player.name} defeated!")
             self.battle_log.add_message(f"{self.player.name} defeated!")
             pygame.mixer.Sound('assets/sounds/die.wav').play()
             self.player_alive = False
             return True
         elif all(enemy.stats["hp"] <= 0 for enemy in self.enemies):
-            print(f"{self.enemies[0].name} defeated!")
             self.battle_log.add_message(f"{self.enemies[0].name} defeated!")
             pygame.mixer.Sound('assets/sounds/enemydie.wav').play()
             return True
@@ -225,6 +214,8 @@ class BattleLog:
             self.messages.pop(0)  # Remove the oldest message
 
     def draw(self, screen):
+        if len(self.messages) == 0:
+            return
         """Draw the battle log messages to the screen."""
         y_offset = self.screen_height - self.log_height # Start drawing from the bottom
         # draw the log box

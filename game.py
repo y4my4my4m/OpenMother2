@@ -437,7 +437,6 @@ while running:
                 original_sprite = battle_system.enemies[0].battle_sprite
                 for _ in range(3):  # Flash 3 times
                     battle_system.enemies[0].battle_sprite = pygame.Surface((0, 0))  # Make sprite invisible
-                    print("flashed")
 
                     screen.fill((0, 0, 0))  # Clear screen
                     battle_system.draw()
