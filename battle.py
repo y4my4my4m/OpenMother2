@@ -267,38 +267,57 @@ class BattleBackground:
     def prepare(self):
         arr = pygame.surfarray.array3d(self.original_image)
         self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
+        self.prepare_palette(self.original_image)
     
     def update(self):
         # Update the oscillation phase for oscillation effects
-        self.oscillation_vertical_phase += 0.2
-        self.oscillation_horizontal_phase += 0.4
+        self.oscillation_vertical_phase += 0.1
+        self.oscillation_horizontal_phase += 0.2
 
     def draw(self, screen):
-        # Reset the image to the original before applying effects
+        # Start with the original image for each frame to ensure effects don't permanently alter it
         image_for_frame = self.original_image.copy()
-        
-        # Apply each effect in sequence
-        for effect_type in self.effect_types:
-            if effect_type == "palette_cycling":
-                image_for_frame = self.apply_palette_cycling(image_for_frame)
-            elif effect_type == "horizontal_oscillation":
-                image_for_frame = self.apply_horizontal_oscillation(image_for_frame)
-            elif effect_type == "vertical_oscillation":
-                image_for_frame = self.apply_vertical_oscillation(image_for_frame)
-            elif effect_type == "background_scrolling":
-                image_for_frame = self.apply_background_scrolling(image_for_frame)
 
-        # After applying effects, scale and blit to the screen
+        # Apply effects in sequence. Instead of transforming image_for_frame directly,
+        # consider applying effects that produce a new surface each time.
+        if "palette_cycling" in self.effect_types:
+            image_for_frame = self.apply_shifted_palette(image_for_frame)
+        if "background_scrolling" in self.effect_types:
+            image_for_frame = self.apply_background_scrolling(image_for_frame)
+        if "horizontal_oscillation" in self.effect_types:
+            image_for_frame = self.apply_horizontal_oscillation(image_for_frame)
+        if "vertical_oscillation" in self.effect_types:
+            image_for_frame = self.apply_vertical_oscillation(image_for_frame)
+
+        # Scale and blit the final image to the screen
         screen.blit(pygame.transform.scale(image_for_frame, (screen_width, screen_height)), (0, 0))
 
+    def prepare_palette(self, image):
+        # Convert image to an array and flatten the array
+        arr = pygame.surfarray.array3d(image).reshape((-1, 3))
+        # Find unique colors and their indices in the original image
+        palette, inverse = np.unique(arr, axis=0, return_inverse=True)
+        self.palette = palette
+        self.inverse_palette_indices = inverse.reshape(image.get_size()[1], image.get_size()[0])
+        self.palette_size = len(palette)
 
-    def apply_palette_cycling(self, image):
-        # Direct pixel manipulation to simulate palette cycling
-        arr = pygame.surfarray.array3d(image)
-        result_arr = arr.copy()
-        for i, color in enumerate(self.palette[:-1]):  # Skip the last color to avoid index out of range
-            result_arr[(arr == self.palette[i]).all(axis=-1)] = self.palette[i + 1]
-        pygame.surfarray.blit_array(image, result_arr)
+    def shift_palette(self):
+        # Shift the palette indices to cycle colors
+        self.palette = np.roll(self.palette, shift=-1, axis=0)
+
+    def apply_shifted_palette(self, image):
+        if pygame.time.get_ticks() % 3 == 0:
+            self.shift_palette()
+        # Ensure the operation is compatible with the image size
+        original_size = image.get_size()
+        # Assuming the inverse palette indices map directly corresponds to the image pixels
+        # Make sure the array operations are consistent with image dimensions
+        reshaped_arr = np.take(self.palette, self.inverse_palette_indices, axis=0)
+        # Reshape to match the original image dimensions, with 3 color channels
+        reshaped_arr_correct = reshaped_arr.reshape(original_size[1], original_size[0], 3)
+
+        # Now, use pygame.surfarray.blit_array to update the image with the reshaped array
+        pygame.surfarray.blit_array(image, reshaped_arr_correct)
         return image
 
     def apply_horizontal_oscillation(self, image):

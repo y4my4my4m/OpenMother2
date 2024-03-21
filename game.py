@@ -416,7 +416,6 @@ while running:
     elif game_state == GAME_STATE_BATTLE:
 
         if battle_system is None or not battle_system.battle_active:
-            # battle_system = BattleSystem(screen, ness, [interacting_npc], 51, "background_scrolling")
             battle_effects = []
             effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
             battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
@@ -424,6 +423,7 @@ while running:
             scroll_y=random.randint(0,1)
             scroll_speed_x=random.randint(-3,3)
             scroll_speed_y=random.randint(-3,3)
+            print(battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
             battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{random.randint(1,327)}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
             battle_log = BattleLog(menu_font, screen_width, screen_height)
             battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log)
@@ -443,9 +443,10 @@ while running:
                     battle_system.draw()
                     battle_menu.draw(screen)
                     battle_system.draw_enemy(battle_system.enemies[0])
-                    pygame.display.flip()
-                    clock.tick(FPS)
-                    pygame.time.wait(100 // 3)
+                    pygame.display.update()
+                    # clock.tick(FPS)
+                    # FIXME
+                    pygame.time.delay(100 // 3)
                     
                     battle_system.enemies[0].battle_sprite = original_sprite  # Restore sprite visibility
 
@@ -453,9 +454,10 @@ while running:
                     battle_system.draw()
                     battle_menu.draw(screen)
                     battle_system.draw_enemy(battle_system.enemies[0])
-                    pygame.display.flip()
-                    clock.tick(FPS)
-                    pygame.time.wait(100 // 3)
+                    pygame.display.update()
+                    # clock.tick(FPS)
+                    # FIXME
+                    pygame.time.delay(100 // 3)
                 battle_system.flash_enemy_flag = False
             else:
                 battle_system.draw_enemy(battle_system.enemies[0])
@@ -500,7 +502,7 @@ while running:
 
             if battle_system.check_battle_end():
                 battle_system.end_battle()
-            pygame.time.wait(100)
+            # pygame.time.wait(10)
     
     elif game_state == GAME_STATE_GAMEOVER:
         scaled_gameover_image = pygame.transform.scale(gameover_image, (screen_width, screen_height))
