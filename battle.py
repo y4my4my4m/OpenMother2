@@ -202,8 +202,8 @@ class BattleLog:
         self.messages = []
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.log_height = 190  # Height of the log area
-        self.message_limit = 5  # Max number of messages to display at once
+        self.log_height = 230  # Height of the log area
+        self.message_limit = 6  # Max number of messages to display at once
 
     def add_message(self, message):
         """Add a message to the battle log queue."""
@@ -219,7 +219,8 @@ class BattleLog:
         """Draw the battle log messages to the screen."""
         y_offset = self.screen_height - self.log_height # Start drawing from the bottom
         # draw the log box
-        pygame.draw.rect(screen, (16, 16, 16), (20, y_offset - 140, 350, self.log_height))
+        pygame.draw.rect(screen, (16, 16, 16), (20, y_offset - 180, 350, self.log_height))
+        pygame.draw.rect(screen, (255,255,255), (20, y_offset - 180, 350, self.log_height), 2)
         for message in reversed(self.messages):
             if message == "Smaaash!":
                 smash_image = pygame.image.load('assets/sprites/smash.png')
