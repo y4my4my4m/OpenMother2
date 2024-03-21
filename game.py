@@ -5,7 +5,7 @@ from npc import NPC
 from camera import Camera
 from utils.collision import load_collision_boxes
 from dialoguebox import DialogueBox
-from battle import BattleSystem, BattleMenu, BattleBackground
+from battle import BattleSystem, BattleMenu, BattleBackground, BattleLog
 import random
 
 pygame.init()
@@ -88,7 +88,7 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [55, 10, 8, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [55, 10, 3, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
     NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
     NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
@@ -425,7 +425,8 @@ while running:
             scroll_speed_x=random.randint(0,3)
             scroll_speed_y=random.randint(0,3)
             battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{random.randint(1,327)}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
-            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background)
+            battle_log = BattleLog(menu_font, screen_width, screen_height)
+            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log)
             battle_system.start_battle()
 
         while battle_system.battle_active:
@@ -436,10 +437,14 @@ while running:
                 original_sprite = battle_system.enemies[0].battle_sprite
                 for _ in range(3):  # Flash 3 times
                     battle_system.enemies[0].battle_sprite = pygame.Surface((0, 0))  # Make sprite invisible
+                    print("flashed")
 
                     screen.fill((0, 0, 0))  # Clear screen
                     battle_system.draw()
                     battle_menu.draw(screen)
+                    battle_system.draw_enemy(battle_system.enemies[0])
+                    pygame.display.flip()
+                    clock.tick(FPS)
                     pygame.time.wait(100 // 3)
                     
                     battle_system.enemies[0].battle_sprite = original_sprite  # Restore sprite visibility
@@ -447,6 +452,9 @@ while running:
                     screen.fill((0, 0, 0))  # Clear screen
                     battle_system.draw()
                     battle_menu.draw(screen)
+                    battle_system.draw_enemy(battle_system.enemies[0])
+                    pygame.display.flip()
+                    clock.tick(FPS)
                     pygame.time.wait(100 // 3)
                 battle_system.flash_enemy_flag = False
             else:

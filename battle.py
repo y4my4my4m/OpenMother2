@@ -11,7 +11,7 @@ cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 battle_hud_box = pygame.image.load('assets/sprites/battle_hud_box.png')
 class BattleSystem:
-    def __init__(self, screen, player, enemies, bg):
+    def __init__(self, screen, player, enemies, bg, log):
         self.screen = screen
         self.player = player
         self.enemies = enemies
@@ -19,7 +19,7 @@ class BattleSystem:
         self.current_turn = 'player'
         self.battle_active = False
         self.bg = bg
-        self.battle_log = BattleLog(pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24), screen_width, screen_height)
+        self.battle_log = log
         self.is_player_turn = True
         self.flash_enemy_flag = False
         self.player_alive = True
