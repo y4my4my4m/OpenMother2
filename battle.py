@@ -275,7 +275,7 @@ class BattleBackground:
         # For oscillation effect
         self.oscillation_vertical_phase = 0
         self.oscillation_horizontal_phase = 0
-
+        self.oscillation_phase = 0
 
     def prepare(self):
         arr = pygame.surfarray.array3d(self.original_image)
@@ -290,6 +290,7 @@ class BattleBackground:
             self.last_palette_update_time = current_time
         self.oscillation_vertical_phase += 0.1
         self.oscillation_horizontal_phase += 0.2
+        self.oscillation_phase += 0.1
 
     def draw(self, screen):
         # Start with the original image for each frame to ensure effects don't permanently alter it
@@ -305,6 +306,8 @@ class BattleBackground:
             image_for_frame = self.apply_horizontal_oscillation(image_for_frame)
         if "vertical_oscillation" in self.effect_types:
             image_for_frame = self.apply_vertical_oscillation(image_for_frame)
+        if "interleaved_oscillation" in self.effect_types:
+            image_for_frame = self.apply_interleaved_oscillation(image_for_frame)
 
         # Scale and blit the final image to the screen
         screen.blit(pygame.transform.scale(image_for_frame, (screen_width, screen_height)), (0, 0))
@@ -393,3 +396,22 @@ class BattleBackground:
         # Instead of converting to an array and back, simply return the tiled surface
         return tiled_surface
 
+    def apply_interleaved_oscillation(self, image, amplitude=10, frequency=0.1):
+        # Convert the image into a pixel array for manipulation
+        arr = pygame.surfarray.array3d(image)
+        oscillated_arr = np.zeros_like(arr)
+
+        height = arr.shape[1]
+
+        for y in range(height):
+            # Calculate the oscillation offset for this row
+            # Alternate the direction of the oscillation based on the row number
+            direction = 1 if y % 2 == 0 else -1
+            shift = int(amplitude * math.sin(frequency * y + self.oscillation_phase) * direction)
+            
+            # Apply the shift to this row
+            oscillated_arr[:, y, :] = np.roll(arr[:, y, :], shift, axis=0)
+
+        # Convert the manipulated pixel array back into an image
+        pygame.surfarray.blit_array(image, oscillated_arr)
+        return image

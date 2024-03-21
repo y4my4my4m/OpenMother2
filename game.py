@@ -417,8 +417,9 @@ while running:
 
         if battle_system is None or not battle_system.battle_active:
             battle_effects = []
+            effects = ["interleaved_oscillation", "palette_cycling"]
             # effects = ["palette_cycling"]
-            effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
+            # effects = ["horizontal_oscillation", "vertical_oscillation", "interleaved_oscillation", "palette_cycling", "background_scrolling"]
             battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
             scroll_x=random.randint(0,1)
             scroll_y=random.randint(0,1)
