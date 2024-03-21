@@ -94,6 +94,8 @@ npcs = [
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
     NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
 ]
+# GUI
+swirl_frame_images = [pygame.image.load(f'assets/sprites/swirls/enemy/{i}.png').convert_alpha() for i in range(1, 24)]  # Adjust path and range as needed
 
 # Battle
 battle_menu_options = ["Bash", "Goods", "Auto Fight", "PSI", "Defend", "Run"]
@@ -280,7 +282,28 @@ def check_interaction(player, npcs):
             return npc
     return None
 
+
+def swirl_draw(frames, opacity=128):
+    for frame in frames:
+        frame.set_colorkey((248, 248, 248))
+        frame.set_alpha(opacity)  # Set frame opacity
+        frame_scaled = pygame.transform.scale(frame, (screen_width, screen_height))  # Scale frame
+        screen.blit(frame_scaled, (0, 0))  # Draw frame
+        pygame.time.wait(1000 // 24)  # Wait to simulate frame rate (24 FPS here)
+        pygame.display.update()  # Update display
+
+    # make a transparent black surface
+    black_surface = pygame.Surface((screen_width, screen_height))
+    black_surface.fill((0, 0, 0))
+    # black_surface.set_alpha(opacity)
+    screen.blit(black_surface, (0, 0))
+    pygame.display.flip()
+    # Optionally, pause for a moment before continuing
+    pygame.time.wait(1000)  # Wait a second after the animation
+    swirl_animation = False
+
 # Game loop
+swirl_animation = False
 running = True
 while running:
     if game_state == GAME_STATE_EXPLORATION:
@@ -323,7 +346,8 @@ while running:
                                     game_state = GAME_STATE_BATTLE
                                     pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
                                     # wait for the sound to finish
-                                    pygame.time.wait(2000)
+                                    swirl_animation = True
+
                                     pygame.mixer.music.load(BATTLE_MUSIC_PATH)
                                     pygame.mixer.music.play(-1)
                                     interacting_npc.pending_battle = False
@@ -351,14 +375,6 @@ while running:
 
                 if event.key == pygame.K_e:
                     print(f"{ness.x}, {ness.y}")
-                    # interacting_npc = check_interaction(ness, npcs)
-                    # cursor_horizontal_sfx.play()
-                    # if interacting_npc:
-                    #     if dialogue_box.is_visible:
-                    #         dialogue_box.hide()
-                    #     else:
-                    #         interacting_npc.interact()
-                    #         cursor_vertical_sfx.play()
 
                 if menu_open:
                     col = menu_selection % menu_columns
@@ -409,6 +425,10 @@ while running:
         draw_menu()
 
         interacting_npc = check_interaction(ness, npcs)
+
+        if swirl_animation:
+            swirl_draw(swirl_frame_images, 128)
+
         if not interacting_npc:
             dialogue_box.hide()
         dialogue_box.draw(screen)
@@ -517,6 +537,8 @@ while running:
 
             if battle_system.check_battle_end():
                 battle_system.end_battle()
+                interacting_npc = None
+                swirl_animation = False
             # pygame.time.wait(10)
     
     elif game_state == GAME_STATE_GAMEOVER:

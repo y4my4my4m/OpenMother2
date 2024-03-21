@@ -33,8 +33,8 @@ def find_sprites_and_export(image_path, export_path, transparency_threshold=127)
             queue.extend([(cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)])
         return bounds
 
-    for x in range(width):
-        for y in range(height):
+    for y in range(height):
+        for x in range(width):
             if (x, y) not in visited and not is_transparent(x, y):
                 sprite = flood_fill(x, y)
                 if sprite.width > 1 and sprite.height > 1:  # Filter out single-pixel "boxes"
@@ -56,8 +56,8 @@ pygame.display.set_mode((1, 1))
 
 # Define the image path and where to save the exported PNG files
 # image_path = '../assets/sprites/enemies.png'
-image_path = '../assets/sprites/battle_backgrounds.png'
-export_path = '../assets/sprites/battle_backgrounds/'
+image_path = '../assets/sprites/encounter_swirls.png'
+export_path = '../assets/sprites/swirls/'
 
 find_sprites_and_export(image_path, export_path)
 
