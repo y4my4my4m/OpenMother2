@@ -6,17 +6,19 @@ import time
 
 pygame.init()
 # fixme
-screen_width = 1280
-screen_height = 720
+# screen_width = 1280
+# screen_height = 720
 cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 battle_hud_box = pygame.image.load('assets/sprites/battle_hud_box.png')
 class BattleSystem:
-    def __init__(self, screen, player, enemies, bg, log, bg_tfx=None):
+    def __init__(self, screen, player, enemies, bg, log, screen_width, screen_height, bg_tfx=None):
         self.screen = screen
         self.player = player
         self.enemies = enemies
         # self.gui = BattleGUI(player, enemies)
+        self.screen_width = screen_width
+        self.screen_height = screen_height
         self.current_turn = 'player'
         self.battle_active = False
         self.bg = bg
@@ -37,7 +39,7 @@ class BattleSystem:
 
     def draw_enemy(self, enemy):
         if self.battle_ongoing_flag:
-            self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (screen_width // 2 - enemy.battle_sprite.get_width() // 2, (screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
+            self.screen.blit(pygame.transform.scale(enemy.battle_sprite, (enemy.battle_sprite.get_width() * 3, enemy.battle_sprite.get_height() * 3)), (self.screen_width // 2 - enemy.battle_sprite.get_width() // 2, (self.screen_height // 2 - enemy.battle_sprite.get_height() // 2) - enemy.battle_sprite.get_height() // 2))
    
     def draw(self):
         self.bg.draw(self.screen)
@@ -49,20 +51,20 @@ class BattleSystem:
         self.draw_hud()
 
     def draw_hud(self):
-        self.screen.blit(pygame.transform.scale(battle_hud_box, (battle_hud_box.get_width() * 2, battle_hud_box.get_height() * 2)), (screen_width // 2 - battle_hud_box.get_width() // 2, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 ))
+        self.screen.blit(pygame.transform.scale(battle_hud_box, (battle_hud_box.get_width() * 2, battle_hud_box.get_height() * 2)), (self.screen_width // 2 - battle_hud_box.get_width() // 2, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 ))
         # display player's name
         player_name_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.name}", True, (0, 0, 0))
-        self.screen.blit(player_name_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 20, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 15))
+        self.screen.blit(player_name_text, (self.screen_width // 2 - battle_hud_box.get_width() // 2 + 20, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 15))
         # display player HP
         player_hp_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['hp']}", True, (0, 0, 0))
-        self.screen.blit(player_hp_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 45))
+        self.screen.blit(player_hp_text, (self.screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 45))
         # display player PSI
         player_psi_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['psi']}", True, (0, 0, 0))
-        self.screen.blit(player_psi_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75))
+        self.screen.blit(player_psi_text, (self.screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75))
 
         # Draw the roulettes
-        self.hp_roulette.draw(self.screen, (screen_width // 2) + 22, screen_height - 118)
-        self.pp_roulette.draw(self.screen, (screen_width // 2) + 38, screen_height - 86)
+        self.hp_roulette.draw(self.screen, (self.screen_width // 2) + 22, self.screen_height - 118)
+        self.pp_roulette.draw(self.screen, (self.screen_width // 2) + 38, self.screen_height - 86)
 
 
     def calculate_damage(self, attacker, defender):
@@ -339,15 +341,18 @@ class NumberRoulette:
 
 
 class BattleBackground:
-    def __init__(self, filename, effect_types, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
+    def __init__(self, filename, effect_types, screen_width, screen_height, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
         self.original_image = pygame.image.load(filename)
+
+        self.screen_width = screen_width
+        self.screen_height = screen_height
         
         # background_scrolling will be fullscreen
         # self.image = pygame.transform.scale(self.original_image.copy(), (screen_width, screen_height))
         # background_scrolling with be HD
         # self.image = self.original_image.copy()
 
-        self.image = pygame.transform.scale(self.original_image.copy(), (screen_width//1.6, screen_height//.9))
+        self.image = pygame.transform.scale(self.original_image.copy(), (self.screen_width//1.6, self.screen_height//.9))
         self.effect_types = effect_types
 
         # For palette cycling effect
@@ -403,7 +408,7 @@ class BattleBackground:
         if (transparent):
             image_for_frame.set_colorkey((0, 0, 0))
             image_for_frame.set_alpha(128)
-        screen.blit(pygame.transform.scale(image_for_frame, (screen_width, screen_height)), (0, 0))
+        screen.blit(pygame.transform.scale(image_for_frame, (self.screen_width, self.screen_height)), (0, 0))
         
 
     def prepare_palette(self, image):
@@ -466,11 +471,11 @@ class BattleBackground:
 
     def apply_background_scrolling(self, image):
         # Create a new surface to hold the tiled background
-        tiled_surface = pygame.Surface((screen_width, screen_height))
+        tiled_surface = pygame.Surface((self.screen_width, self.screen_height))
 
         # Calculate the number of times the image needs to be drawn to cover the screen
-        num_tiles_x = int(np.ceil(screen_width / image.get_width())) + 1
-        num_tiles_y = int(np.ceil(screen_height / image.get_height())) + 1
+        num_tiles_x = int(np.ceil(self.screen_width / image.get_width())) + 1
+        num_tiles_y = int(np.ceil(self.screen_height / image.get_height())) + 1
 
         # Update the scroll position
         self.scroll_x += self.scroll_speed_x

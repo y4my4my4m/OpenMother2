@@ -16,12 +16,13 @@ FULLSCREEN = False
 screen_width = 1280
 screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCREEN if FULLSCREEN else 0) | pygame.DOUBLEBUF)
+
 # detect screen resolution
 # infoObject = pygame.display.Info()
 # screen_width = infoObject.current_w
 # screen_height = infoObject.current_h
-# make it full screen
-# screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+# #make it full screen
+# screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN | pygame.DOUBLEBUF)
 
 # Colors and FPS
 BLACK = (0, 0, 0)
@@ -94,6 +95,10 @@ npcs = [
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
     NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
 ]
+
+layer0_npcs = []
+layer1_npcs = []
+
 # GUI
 swirl_frame_images = [pygame.image.load(f'assets/sprites/swirls/enemy/{i}.png').convert_alpha() for i in range(1, 24)]  # Adjust path and range as needed
 
@@ -275,6 +280,14 @@ def adjust_z_index(character, collision_boxes):
                 return True
     return False
 
+def adjust_z_index_npc(character, other):
+    if character.colliderect(other):
+        if other.top < character.bottom <= other.top:
+            return False
+        elif other.bottom > character.top >= other.bottom:
+            return True
+    return False
+
 def check_interaction(player, npcs):
     for npc in npcs:
         # Simple distance check for interaction
@@ -447,7 +460,7 @@ while running:
             scroll_speed_y=random.randint(-3,3)
             background_id = random.randint(1,327)
             print(battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
-            battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
+            battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, screen_width, screen_height, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
             
             battle_background_tfx = None
             if random.randint(0, 100) < 50:
@@ -458,10 +471,10 @@ while running:
                 scroll_y=random.randint(0,1)
                 scroll_speed_x=random.randint(-3,3)
                 scroll_speed_y=random.randint(-3,3)
-                battle_background_tfx = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
+                battle_background_tfx = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, screen_width, screen_height, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
 
             battle_log = BattleLog(menu_font, screen_width, screen_height)
-            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log, battle_background_tfx)
+            battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log, screen_width, screen_height, battle_background_tfx)
             battle_system.start_battle()
 
         while battle_system.battle_active:
