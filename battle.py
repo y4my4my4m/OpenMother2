@@ -61,7 +61,7 @@ class BattleSystem:
         self.screen.blit(player_psi_text, (screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 75))
 
         # In your game loop
-        self.hp_roulette.update()
+        # self.hp_roulette.update()
         # self.pp_roulette.update()
 
         # Draw the roulettes
@@ -120,7 +120,7 @@ class BattleSystem:
             self.battle_log.add_message(f"{attacker.name} missed!")
 
         self.hp_roulette.set_target_value(defender.stats["hp"] - damage)
-        self.hp_roulette.update()
+        # self.hp_roulette.update()
 
         return damage
 
@@ -266,80 +266,96 @@ class BattleLog:
                 screen.blit(text_surface, (40, y_offset))
                 y_offset -= text_surface.get_height()  # Move up for the next message
 class NumberRoulette:
-    def __init__(self, spritesheet_path, current_value, animation_speed=1):
+    def __init__(self, spritesheet_path, current_value):
         self.spritesheet = pygame.image.load(spritesheet_path).convert_alpha()
         self.current_value = current_value
         self.target_value = current_value
-        self.animation_speed = animation_speed
-        self.digit_animations = {}  # Tracks animation state for each digit
-        self.frame_width = 8
-        self.frame_height = 12
-        self.animation_frame = 0
-        self.animating = False
+        self.frame_width = 8  # Assuming each frame's width in the spritesheet
+        self.frame_height = 12  # Assuming each frame's height in the spritesheet
         self.frames = self.load_frames()
+        self.digit_animations = []
+        self.frame_duration = 100
+        self.last_update_time = pygame.time.get_ticks()
 
     def load_frames(self):
         frames = {str(n): [] for n in range(10)}
         for n in range(10):
-            for frame in range(4):
+            for frame in range(5):
                 x = frame * self.frame_width + n * (self.frame_width * 4)
                 y = 0
-                frames[str(n)].append(self.spritesheet.subsurface(pygame.Rect(x, y, self.frame_width, self.frame_height)))
+                rect = pygame.Rect(x, y, self.frame_width, self.frame_height)
+                frames[str(n)].append(self.spritesheet.subsurface(rect))
         return frames
 
     def set_target_value(self, value):
         self.target_value = value
         self.prepare_digit_animations()
-        self.animating = True
 
     def prepare_digit_animations(self):
+        self.digit_animations.clear()
         target_str = str(self.target_value).zfill(len(str(self.target_value)))
         current_str = str(self.current_value).zfill(len(target_str))
-        self.digit_animations = {i: {"current": int(current_str[i]), "target": int(target_str[i])} for i in range(len(target_str))}
+        for i in range(len(target_str)):
+            if current_str[i] != target_str[i]:
+                self.digit_animations.append({
+                    'index': i,
+                    'start': int(current_str[i]),
+                    'end': int(target_str[i]),
+                    'current_frame': 0
+                })
 
     def update(self):
-        animation_in_progress = False
-        for i, anim in enumerate(self.digit_animations.values()):
-            if anim['current'] != anim['target']:
-                # Animation is considered in progress if any digit hasn't reached its target
-                animation_in_progress = True
+        now = pygame.time.get_ticks()
+        if now - self.last_update_time > self.frame_duration:
+            self.last_update_time = now
+            need_update = False
 
-                # Update the digit towards its target
-                direction = 1 if anim['target'] > anim['current'] else -1
-                anim['current'] += direction
+            # Prepare a list representation of the current and target values for easy manipulation
+            current_value_str = list(str(self.current_value).zfill(len(str(self.target_value))))
+            target_value_str = list(str(self.target_value).zfill(len(str(self.target_value))))
 
-                # Clamp the value to ensure it doesn't overshoot the target
-                if direction > 0:
-                    anim['current'] = min(anim['current'], anim['target'])
-                else:
-                    anim['current'] = max(anim['current'], anim['target'])
+            for anim in self.digit_animations:
+                current_digit_index = anim['index']
+                start_digit = anim['start']
+                end_digit = anim['end']
 
-                # Check if the digit reached its target and reset the frame to 0
-                if anim['current'] == anim['target']:
-                    # Reset the animation frame to 0 for this digit to ensure it ends on a clear number
-                    self.animation_frame = 0
+                # Determine direction of animation based on start and end digits
+                direction = 1 if end_digit > start_digit or (start_digit == 9 and end_digit == 0) else -1
 
-        self.animating = animation_in_progress
+                # Calculate next digit considering the direction of animation
+                next_digit = (int(current_value_str[current_digit_index]) + direction) % 10
 
-        # Only increment the animation frame if the animation is still in progress
-        if self.animating:
-            self.animation_frame = (self.animation_frame + 1) % 4
+                # Update the current digit in the string representation
+                current_value_str[current_digit_index] = str(next_digit)
 
-        # If no animation is in progress, update the current_value to match target_value and reset frames
-        if not self.animating:
-            self.current_value = self.target_value
+                # Determine if the animation for this digit is complete
+                if next_digit == end_digit:
+                    # Remove animation if complete
+                    anim['completed'] = True
+
+            # Update the current value after all digit animations have been processed
+            self.current_value = int("".join(current_value_str))
+
+            # Remove completed animations
+            self.digit_animations = [anim for anim in self.digit_animations if not anim.get('completed', False)]
+
+            # Determine if there are any animations left
+            self.animating = len(self.digit_animations) > 0
 
 
     def draw(self, screen):
-        # Generate the value string from the up-to-date current_value
+        self.update()
         value_str = str(self.current_value).zfill(len(str(self.target_value)))
-
         for i, digit in enumerate(value_str):
-            # Draw each digit based on the current frame; no need to check animation state here
-            frame_index = self.animation_frame if self.animating else 0
-            digit_frame = self.frames[digit][frame_index]
+            frame = 0
+            for anim in self.digit_animations:
+                if anim['index'] == i:
+                    frame = anim['current_frame']
+                    break
+            digit_frame = self.frames[digit][frame]
             scaled_digit_frame = pygame.transform.scale(digit_frame, (self.frame_width * 2, self.frame_height * 2))
-            screen.blit(scaled_digit_frame, ((screen_width // 2) + 38 + i * self.frame_width * 2, screen_height - 118))
+            # screen.blit(scaled_digit_frame, ((screen_width // 2) + 38 + i * self.frame_width * 2, screen_height - 118))
+            screen.blit(scaled_digit_frame, ((screen_width // 2) + 22 + i * self.frame_width * 2, screen_height - 118))
 
 class BattleBackground:
     def __init__(self, filename, effect_types, scroll_x=0, scroll_y=0, scroll_speed_x=2, scroll_speed_y=0):
