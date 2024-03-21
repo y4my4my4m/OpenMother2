@@ -372,23 +372,23 @@ class BattleBackground:
         tiled_surface = pygame.Surface((screen_width, screen_height))
 
         # Calculate the number of times the image needs to be drawn to cover the screen
-        num_tiles_x = int(np.ceil(screen_width / self.image.get_width())) + 1
-        num_tiles_y = int(np.ceil(screen_height / self.image.get_height())) + 1
+        num_tiles_x = int(np.ceil(screen_width / image.get_width())) + 1
+        num_tiles_y = int(np.ceil(screen_height / image.get_height())) + 1
 
         # Update the scroll position
         self.scroll_x += self.scroll_speed_x
         self.scroll_y += self.scroll_speed_y
 
         # Ensure scroll wraps correctly
-        self.scroll_x %= self.image.get_width()
-        self.scroll_y %= self.image.get_height()
+        self.scroll_x %= image.get_width()
+        self.scroll_y %= image.get_height()
 
         # Draw the image at each tile position to cover the screen
         for x_tile in range(num_tiles_x):
             for y_tile in range(num_tiles_y):
-                draw_x = x_tile * self.image.get_width() - self.scroll_x
-                draw_y = y_tile * self.image.get_height() - self.scroll_y
-                tiled_surface.blit(self.image, (draw_x, draw_y))
+                draw_x = x_tile * image.get_width() - self.scroll_x
+                draw_y = y_tile * image.get_height() - self.scroll_y
+                tiled_surface.blit(image, (draw_x, draw_y))
 
         # Instead of converting to an array and back, simply return the tiled surface
         return tiled_surface
