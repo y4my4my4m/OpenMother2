@@ -84,7 +84,7 @@ cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 debug_view_collision = False
 debug_view_layer0 = False
 debug_view_layer1 = False
-debug_disable_collision = False
+debug_disable_collision = True
 debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
@@ -108,6 +108,29 @@ battle_menu = BattleMenu(menu_font, battle_menu_options)
 
 # Gameover
 gameover_image = pygame.image.load('assets/sprites/gameover.png').convert_alpha()
+
+def draw_entities_sorted(player, npcs, camera, screen):
+    # Combine player and NPCs into one list, assuming they have similar attributes for position
+    entities = [player] + npcs
+    
+    # Sort entities based on the bottom edge of their rectangles (their "feet")
+    sorted_entities = sorted(entities, key=lambda x: x.rect.bottom)
+    
+    # Draw entities in sorted order
+    for entity in sorted_entities:
+
+        if entity.stats["hp"] > 0:
+            entity.handle_behaviour()
+            entity_image = entity.animate()  # Assuming each entity has an animate() method
+            entity_pos = (
+                (entity.rect.x - camera.camera.x) * camera.zoom, 
+                (entity.rect.y - camera.camera.y) * camera.zoom
+            )
+            scaled_entity_image = pygame.transform.scale(entity_image, (
+                int(entity.rect.width * camera.zoom), 
+                int(entity.rect.height * camera.zoom)
+            ))
+            screen.blit(scaled_entity_image, entity_pos)
 
 def draw_everything():
     # Determine the visible area of the map, including a 100px outer bound
@@ -189,29 +212,31 @@ def draw_everything():
         # Draw parts of the environment that are "behind" the character first
         if not debug_view_layer1:
             screen.blit(scaled_map_image_layer1, blit_position_layer1)
-        screen.blit(scaled_ness_image, ness_pos)
+        # screen.blit(scaled_ness_image, ness_pos)
+        draw_entities_sorted(ness, npcs, camera, screen)
         # After that, draw the remaining parts of the environment
     else:
         # Draw the character first, then overlay parts of the environment
-        screen.blit(scaled_ness_image, ness_pos)
+        # screen.blit(scaled_ness_image, ness_pos)
+        draw_entities_sorted(ness, npcs, camera, screen)
         if not debug_view_layer1:
             screen.blit(scaled_map_image_layer1, blit_position_layer1)
 
 
-    for npc in npcs:
-        if npc.stats["hp"] > 0:
-            npc.handle_behaviour()
-            npc_image = npc.animate()
-            npc_pos = (
-                (npc.rect.x - camera.camera.x) * camera.zoom, 
-                (npc.rect.y - camera.camera.y) * camera.zoom
-            )
-            scaled_npc_image = pygame.transform.scale(npc_image, (
-                int(npc.rect.width * camera.zoom), 
-                int(npc.rect.height * camera.zoom)
-            ))
+    # for npc in npcs:
+        # if npc.stats["hp"] > 0:
+            # npc.handle_behaviour()
+            # npc_image = npc.animate()
+            # npc_pos = (
+            #     (npc.rect.x - camera.camera.x) * camera.zoom, 
+            #     (npc.rect.y - camera.camera.y) * camera.zoom
+            # )
+    #         scaled_npc_image = pygame.transform.scale(npc_image, (
+    #             int(npc.rect.width * camera.zoom), 
+    #             int(npc.rect.height * camera.zoom)
+    #         ))
             
-            screen.blit(scaled_npc_image, npc_pos)
+    #         screen.blit(scaled_npc_image, npc_pos)
 
 
 def draw_debug():

@@ -30,6 +30,8 @@ class Character:
         }
         self.inventory = inventory if inventory is not None else {}
       
+    def handle_behaviour(self):
+        pass
     def make_transparent(self, image):
         # Set the color key to the top-left pixel's color, assuming it's the background
         transparent_color = image.get_at((0, 0))
