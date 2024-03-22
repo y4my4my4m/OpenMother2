@@ -55,7 +55,7 @@ velocity = 1
 
 # Initialize Camera
 camera = Camera(screen_width, screen_height, map_layer0_rect.width, map_layer0_rect.height)
-camera.zoom = 2.0
+camera.zoom = 3
 # camera.update(ness)  # Force the camera to center on Ness at startup
 
 # Music
