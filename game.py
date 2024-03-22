@@ -96,7 +96,7 @@ npcs = [
     NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 137, True, None, 3, 14, "look_at_player", dialogue_box),
     NPC("Random hoe", 1300, 1700, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "The arcane beckons.", ness, [60, 15, 8, 10, 5, 3], 32, True, None, 3, 16, "look_at_player", dialogue_box),
     NPC("Curious Child", 1810, 1350, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen that thing in the sky?", ness, [30, 25, 1, 1, 1, 10], 12, True, None, 3, 18, "look_at_player", dialogue_box),
-    NPC("Police Chief", 1900, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Move along, punk!", ness, [45, 5, 7, 2, 4, 5], 56, True, None, 3, 22, "look_at_player", dialogue_box),
+    NPC("Police Chief", 1900, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Move along, punk!", ness, [45, 5, 7, 2, 4, 5], 56, True, None, 3, 22, "follow", dialogue_box),
     NPC("Mysterious Vendor", 1300, 1160, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Looking for something rare?", ness, [50, 30, 2, 6, 8, 2], 82, True, None, 3, 10, "look_at_player", dialogue_box),
     NPC("Classy Guy", 1900, 1000, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "There's treasure at the arcades.", ness, [55, 20, 4, 3, 6, 4], 43, True, None, 3, 21, "look_at_player", dialogue_box)
 ]
@@ -226,22 +226,6 @@ def draw_everything():
         draw_entities_sorted(ness, npcs, camera, screen)
         if not debug_view_layer1:
             screen.blit(scaled_map_image_layer1, blit_position_layer1)
-
-
-    # for npc in npcs:
-        # if npc.stats["hp"] > 0:
-            # npc.handle_behaviour()
-            # npc_image = npc.animate()
-            # npc_pos = (
-            #     (npc.rect.x - camera.camera.x) * camera.zoom, 
-            #     (npc.rect.y - camera.camera.y) * camera.zoom
-            # )
-    #         scaled_npc_image = pygame.transform.scale(npc_image, (
-    #             int(npc.rect.width * camera.zoom), 
-    #             int(npc.rect.height * camera.zoom)
-    #         ))
-            
-    #         screen.blit(scaled_npc_image, npc_pos)
 
 
 def draw_debug():
@@ -444,7 +428,7 @@ while running:
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LSHIFT:
                     velocity = 1
-        
+
         # Movement and animation update
         keys = pygame.key.get_pressed()
         dx, dy = 0, 0
@@ -468,6 +452,17 @@ while running:
         draw_menu()
 
         interacting_npc = check_interaction(ness, npcs)
+
+        if interacting_npc:
+            if interacting_npc.force_battle and interacting_npc.pending_battle:
+                game_state = GAME_STATE_BATTLE
+                pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
+                # wait for the sound to finish
+                swirl_animation = True
+
+                pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+                pygame.mixer.music.play(-1)
+                interacting_npc.pending_battle = False
 
         if swirl_animation:
             swirl_draw(swirl_frame_images, 128)
@@ -571,6 +566,8 @@ while running:
                                     # battle_system.player_turn()
                                     battle_system.flash_enemy_flag = True
                             if action == "Run":
+                                if interacting_npc and interacting_npc.force_battle:
+                                    break
                                 game_state = GAME_STATE_EXPLORATION
                                 pygame.mixer.music.load(ONETT_MUSIC_PATH)
                                 pygame.mixer.music.play(-1)

@@ -2,6 +2,7 @@ import pygame
 from character import Character
 from dialoguebox import DialogueBox
 from battle import BattleSystem
+import math
 class NPC(Character):
     def __init__(self, name, x, y, width, height, filename, collision_boxes, dialogue, player, stats, battle_sprite_id, is_enemy=False, inventory=None, direction=3, npc_index=0, behaviour="idle", dialogue_box=None):
         super().__init__(name, x, y, width, height, filename, collision_boxes, stats, inventory)
@@ -16,6 +17,7 @@ class NPC(Character):
         self.battle_sprite_filename = f'assets/sprites/enemies/{battle_sprite_id}.png'
         self.battle_sprite = pygame.image.load(self.battle_sprite_filename).convert_alpha()
         self.pending_battle = False
+        self.force_battle = False
 
     # def interact(self):
     #     # This method is called when the player interacts with the NPC
@@ -26,11 +28,15 @@ class NPC(Character):
 
     def interact(self):
         # Standard NPC interaction
+        if self.stats["hp"] <= 0:
+            return
         print(self.dialogue)
         if self.dialogue_box:
             self.dialogue_box.show_text(self.dialogue)
 
     def check(self):
+        if self.stats["hp"] <= 0:
+            return
         if self.is_enemy:
             # Trigger battle sequence
             print("Encountered an enemy! Starting battle...")
@@ -38,12 +44,39 @@ class NPC(Character):
         else:
             # Standard NPC interaction
             print(self.dialogue)
+
     def handle_behaviour(self):
         if self.behaviour == "idle":
             # NPC does nothing
             pass
+        # ...
+
         elif self.behaviour == "follow":
-            pass
+            # follows player
+            if self.rect.inflate(300, 200).colliderect(self.player.rect):
+                target_x = self.player.x
+                target_y = self.player.y
+                speed = 1.2 #self.stats["speed"]  # Adjust the speed as needed
+
+                dx = target_x - self.x
+                dy = target_y - self.y
+                distance = math.sqrt(dx ** 2 + dy ** 2)
+
+                if distance > speed:
+                    ratio = speed / distance
+                    x = dx * ratio
+                    y = dy * ratio
+                else:
+                    x = dx
+                    y = dy
+
+                self.move(x, y, True)  # Ignore Collision
+                self.direction = self.get_direction_to_player()
+                # if touches player
+                if self.rect.colliderect(self.player.rect):
+                    self.check()
+                    self.force_battle = True
+
         elif self.behaviour == "patrol":
             pass
         elif self.behaviour == "random":
@@ -51,11 +84,11 @@ class NPC(Character):
         elif self.behaviour == "look_at_player":
             # Update direction to look at the player only if the player is within a certain range (inflate a copy of the rect box)
             if self.rect.inflate(100, 100).colliderect(self.player.rect):
-                self.direction = self.get_direction_to_player(self.player)
+                self.direction = self.get_direction_to_player()
 
-    def get_direction_to_player(self, player):
-        dx = player.x - self.x
-        dy = player.y - self.y
+    def get_direction_to_player(self):
+        dx = self.player.x - self.x
+        dy = self.player.y - self.y
         if abs(dx) > abs(dy):
             if dx > 0:
                 return 1  # Right
