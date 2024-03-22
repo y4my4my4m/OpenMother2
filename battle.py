@@ -245,18 +245,23 @@ class BattleLog:
         if len(self.messages) == 0:
             return
         """Draw the battle log messages to the screen."""
-        y_offset = self.screen_height - self.log_height # Start drawing from the bottom
+        y_offset_box = self.screen_height - self.log_height - 20
+        y_offset = self.screen_height - 65
         # draw the log box
-        pygame.draw.rect(screen, (16, 16, 16), (20, y_offset - 180, 350, self.log_height))
-        pygame.draw.rect(screen, (255,255,255), (20, y_offset - 180, 350, self.log_height), 2)
+        pygame.draw.rect(screen, (16, 16, 16), (20, y_offset_box, 350, self.log_height))
+        pygame.draw.rect(screen, (255,255,255), (20, y_offset_box, 350, self.log_height), 2)
         for message in reversed(self.messages):
             if message == "Smaaash!":
                 smash_image = pygame.image.load('assets/sprites/smash.png')
+                transparent_color = smash_image.get_at((0, 0))
+                smash_image.set_colorkey(transparent_color)
                 smash_image = pygame.transform.scale(smash_image, (smash_image.get_width() * 2, smash_image.get_height() * 2))
                 screen.blit(smash_image, (36, y_offset))
                 y_offset -= smash_image.get_height()
             elif message == "You won!":
                 victory_image = pygame.image.load('assets/sprites/you_won.png')
+                transparent_color = victory_image.get_at((0, 0))
+                victory_image.set_colorkey(transparent_color)
                 victory_image = pygame.transform.scale(victory_image, (victory_image.get_width() * 2, victory_image.get_height() * 2))
                 screen.blit(victory_image, (36, y_offset))
                 y_offset -= victory_image.get_height() + 4

@@ -539,7 +539,7 @@ while running:
             battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, screen_width, screen_height, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
             
             battle_background_tfx = None
-            if random.randint(0, 100) < 50:
+            if random.randint(0, 100) < 20:
                 print("tfx")
                 effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
                 battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
