@@ -89,11 +89,16 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC("RandomNPC1", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [45, 10, 53, 3, 2, 2], 149, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC("Hotel Manager", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [45, 10, 53, 3, 2, 2], 99, True, None, 3, 4, "look_at_player", dialogue_box),
     NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
-    NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 167, True, None, 3, 6, "look_at_player", dialogue_box),
+    NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 111, True, None, 3, 6, "look_at_player", dialogue_box),
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
-    NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box)
+    NPC("RandomNPC5", 1490, 1157, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "I lost my car, can you help me find it?", ness, [50, 20, 1, 7, 7, 2], 36, True, None, 3, 14, "look_at_player", dialogue_box),
+    NPC("Random hoe", 1300, 1700, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "The arcane beckons.", ness, [60, 15, 8, 10, 5, 3], 32, True, None, 3, 16, "look_at_player", dialogue_box),
+    NPC("Curious Child", 1810, 1350, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen that thing in the sky?", ness, [30, 25, 1, 1, 1, 10], 12, True, None, 3, 18, "look_at_player", dialogue_box),
+    NPC("Police Chief", 1900, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Move along, punk!", ness, [45, 5, 7, 2, 4, 5], 56, True, None, 3, 22, "look_at_player", dialogue_box),
+    NPC("Mysterious Vendor", 1300, 1160, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Looking for something rare?", ness, [50, 30, 2, 6, 8, 2], 82, True, None, 3, 10, "look_at_player", dialogue_box),
+    NPC("Classy Guy", 1900, 1000, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "There's treasure at the arcades.", ness, [55, 20, 4, 3, 6, 4], 43, True, None, 3, 21, "look_at_player", dialogue_box)
 ]
 
 layer0_npcs = []
@@ -565,6 +570,15 @@ while running:
                                     pygame.mixer.Sound('assets/sounds/attack1.wav').play()
                                     # battle_system.player_turn()
                                     battle_system.flash_enemy_flag = True
+                            if action == "Run":
+                                game_state = GAME_STATE_EXPLORATION
+                                pygame.mixer.music.load(ONETT_MUSIC_PATH)
+                                pygame.mixer.music.play(-1)
+                                battle_system.battle_ongoing_flag = False
+                                battle_system.end_battle()
+                                battle_system.battle_active = False
+                                interacting_npc = None
+                                swirl_animation = False
                         elif not battle_system.is_player_turn:
                             battle_system.enemy_turn()
 
