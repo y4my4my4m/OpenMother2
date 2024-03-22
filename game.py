@@ -26,6 +26,7 @@ screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCRE
 
 # Colors and FPS
 BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 FPS = 60
 clock = pygame.time.Clock()
 
@@ -71,6 +72,7 @@ menu_open = False
 menu_selection = 0
 menu_columns = 2
 menu_rows = 3
+status_menu_open = False
 current_selection = None
 
 menu_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24)
@@ -259,7 +261,7 @@ def draw_menu():
 
         # Draw menu
         pygame.draw.rect(screen, menu_color, (menu_x, menu_y, menu_width, menu_height))
-        pygame.draw.rect(screen, (255, 255, 255), (menu_x, menu_y, menu_width, menu_height), 2)
+        pygame.draw.rect(screen, WHITE, (menu_x, menu_y, menu_width, menu_height), 2)
 
 
         # Calculate menu item dimensions
@@ -275,8 +277,50 @@ def draw_menu():
             item_y = menu_y + row * (menu_height // menu_rows)
 
             option_text = "> " + option if i == menu_selection else "   " + option
-            text = menu_font.render(option_text, True, (255, 255, 255))
+            text = menu_font.render(option_text, True, WHITE)
             screen.blit(text, (item_x + 10, item_y + 10))
+        
+        if status_menu_open:
+            draw_status_panel(screen, ness)
+
+def draw_status_panel(screen, character):
+    # Panel dimensions and position
+    panel_width = 420
+    panel_height = 240
+    panel_x = (screen.get_width() - panel_width) // 2
+    panel_y = (screen.get_height() - panel_height) // 2
+
+    # Background of the panel
+    panel_background = pygame.Surface((panel_width, panel_height))
+    panel_background.fill(BLACK)
+    panel_background_border = pygame.Surface((panel_width+4, panel_height+4))
+    panel_background_border.fill(WHITE)
+    # pygame.draw.rect(screen, WHITE, (panel_x, panel_y, panel_width, panel_height), 2) # Border
+
+    # Character sprite
+    sprite_resized = pygame.transform.scale(character.menu_sprite, (character.menu_sprite.get_width() * 3, character.menu_sprite.get_height() * 3))  # Adjust as needed
+    character.make_transparent(sprite_resized)
+    panel_background.blit(sprite_resized, (panel_width // 2 - sprite_resized.get_width() //2, 60))
+
+    # Character name
+    name_surface = menu_font.render(character.name, True, WHITE)
+    panel_background.blit(name_surface, (panel_width // 2  - sprite_resized.get_width() //2, 20))  # Adjust position as needed
+
+    # Display stats
+    stat_start_x = 40
+    stat_start_y = 140
+    stats_per_row = 3
+    stat_count = 0
+    for stat, value in character.stats.items():
+        stat_surface = menu_font.render(f"{stat}: {value}", True, WHITE)
+        stat_x = stat_start_x + (stat_count % stats_per_row) * 120
+        stat_y = stat_start_y + (stat_count // stats_per_row) * 30
+        panel_background.blit(stat_surface, (stat_x, stat_y))
+        stat_count += 1
+
+    # Draw the panel on the main screen
+    screen.blit(panel_background_border, (panel_x-2, panel_y-2))
+    screen.blit(panel_background, (panel_x, panel_y))
 
 def adjust_z_index(character, collision_boxes):
     for box in collision_boxes:
@@ -344,6 +388,9 @@ while running:
                     camera.zoom -= 0.1
                     camera.zoom = max(0.1, camera.zoom)
             if event.type == pygame.KEYDOWN:
+                if status_menu_open:
+                    status_menu_open = False
+                    menu_open = False
                 if event.key == pygame.K_LSHIFT:
                     velocity = 4
                 elif event.key == pygame.K_SPACE:
@@ -361,7 +408,7 @@ while running:
                                     interacting_npc.interact()
                                     cursor_vertical_sfx.play()
 
-                        elif current_selection == "Check":
+                        elif current_selection == "Check" and check_interaction(ness, npcs):
                             menu_open = False 
                             if dialogue_box.is_visible:
                                 dialogue_box.hide()
@@ -378,8 +425,12 @@ while running:
                                     pygame.mixer.music.load(BATTLE_MUSIC_PATH)
                                     pygame.mixer.music.play(-1)
                                     interacting_npc.pending_battle = False
+                        elif current_selection == "Status":
+                            # menu_open = False
+                            status_menu_open = True
                         else:
                             menu_open = False
+                            status_menu_open = False
                             # Reset current_selection after handling the action
                             current_selection = None
                     else:
