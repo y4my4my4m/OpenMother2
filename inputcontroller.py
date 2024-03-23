@@ -5,62 +5,79 @@ class InputController:
     def __init__(self):
         self.joystick_enabled = False
         pygame.joystick.init()
+        self.joystick = None
         if pygame.joystick.get_count() > 0:
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()
             self.joystick_enabled = True
 
+        # Action states for continuous actions
         self.action_states = {
-            'move_left': False,
-            'move_right': False,
-            'move_up': False,
-            'move_down': False,
-            'action': False,
-            'back': False,
-            'shift': False,  # Assuming 'shift' is for running or similar continuous action
+            'move_left': False, 'move_right': False, 'move_up': False, 'move_down': False,
+            'action': False, 'back': False, 'shift': False, 'special': False,
+            'select': False, 'start': False, 'bump_l': False, 'bump_r': False,
+            'debug_1': False, 'debug_2': False, 'debug_3': False, 'debug_4': False,
         }
 
-        self.keys_pressed = set()
-        self.joystick_buttons_pressed = set()
+        # Tracks buttons/keys pressed to handle single-press actions
+        self.pressed_states = {key: False for key in self.action_states.keys()}
+        self.previous_states = self.action_states.copy()
+
+        self.keys_mapping = {
+            pygame.K_LEFT: 'move_left', pygame.K_a: 'move_left',
+            pygame.K_RIGHT: 'move_right', pygame.K_d: 'move_right',
+            pygame.K_UP: 'move_up', pygame.K_w: 'move_up',
+            pygame.K_DOWN: 'move_down', pygame.K_s: 'move_down',
+            pygame.K_SPACE: 'action', pygame.K_ESCAPE: 'back',
+            pygame.K_LSHIFT: 'shift', pygame.K_RSHIFT: 'shift',
+            pygame.K_BACKSPACE: 'select', pygame.K_RETURN: 'start',
+            pygame.K_1: 'debug_1', pygame.K_2: 'debug_2',
+            pygame.K_3: 'debug_3', pygame.K_4: 'debug_4',
+        }
+
+        self.joystick_buttons_mapping = {
+            0: 'special', 1: 'back', 2: 'action', 3: 'shift',
+            4: 'bump_l', 5: 'bump_r', 8: 'select', 9: 'start',
+        }
 
     def process_events(self, events):
+        # Reset states for single-press actions
+        for action in self.pressed_states.keys():
+            self.pressed_states[action] = False
+
+        # Process each event
         for event in events:
             if event.type == pygame.QUIT:
                 sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                self.keys_pressed.add(event.key)
-            elif event.type == pygame.KEYUP:
-                self.keys_pressed.discard(event.key)
-            elif event.type == pygame.JOYBUTTONDOWN:
-                self.joystick_buttons_pressed.add(event.button)
-            elif event.type == pygame.JOYBUTTONUP:
-                self.joystick_buttons_pressed.discard(event.button)
+            elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                pressed = event.type == pygame.KEYDOWN
+                action = self.keys_mapping.get(event.key)
+                if action:
+                    self.action_states[action] = pressed
+                    if pressed:
+                        self.pressed_states[action] = not self.previous_states[action]
+            elif event.type == pygame.JOYAXISMOTION:
+                self.handle_joy_axis_motion()
+            elif event.type == pygame.JOYBUTTONDOWN or event.type == pygame.JOYBUTTONUP:
+                pressed = event.type == pygame.JOYBUTTONDOWN
+                action = self.joystick_buttons_mapping.get(event.button)
+                if action:
+                    self.action_states[action] = pressed
+                    if pressed:
+                        self.pressed_states[action] = not self.previous_states[action]
 
-        self.update_action_states()
+        # Update previous states for next frame comparison
+        self.previous_states = self.action_states.copy()
 
-    def update_action_states(self):
-        # Update action states based on keyboard
-        self.action_states['move_left'] = pygame.K_LEFT in self.keys_pressed or pygame.K_a in self.keys_pressed
-        self.action_states['move_right'] = pygame.K_RIGHT in self.keys_pressed or pygame.K_d in self.keys_pressed
-        self.action_states['move_up'] = pygame.K_UP in self.keys_pressed or pygame.K_w in self.keys_pressed
-        self.action_states['move_down'] = pygame.K_DOWN in self.keys_pressed or pygame.K_s in self.keys_pressed
-        self.action_states['action'] = pygame.K_SPACE in self.keys_pressed
-        self.action_states['back'] = pygame.K_ESCAPE in self.keys_pressed
-        self.action_states['shift'] = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
-
-        # Update action states based on joystick axes
+    def handle_joy_axis_motion(self):
         if self.joystick_enabled:
-            self.action_states['move_left'] = self.joystick.get_axis(0) < -0.5 or self.action_states['move_left']
-            self.action_states['move_right'] = self.joystick.get_axis(0) > 0.5 or self.action_states['move_right']
-            self.action_states['move_up'] = self.joystick.get_axis(1) < -0.5 or self.action_states['move_up']
-            self.action_states['move_down'] = self.joystick.get_axis(1) > 0.5 or self.action_states['move_down']
-
-        # Update action states based on joystick buttons
-        if self.joystick_enabled:
-            self.action_states['action'] = 0 in self.joystick_buttons_pressed or self.action_states['action']
-            self.action_states['back'] = 1 in self.joystick_buttons_pressed or self.action_states['back']
-            # Assuming button 3 (Y on Xbox controller) is used for 'shift' action
-            self.action_states['shift'] = 3 in self.joystick_buttons_pressed or self.action_states['shift']
+            self.action_states['move_left'] = self.joystick.get_axis(0) < -0.5
+            self.action_states['move_right'] = self.joystick.get_axis(0) > 0.5
+            self.action_states['move_up'] = self.joystick.get_axis(1) < -0.5
+            self.action_states['move_down'] = self.joystick.get_axis(1) > 0.5
 
     def is_action_pressed(self, action_name):
         return self.action_states.get(action_name, False)
+
+    def is_action_pressed_once(self, action_name):
+        return self.pressed_states.get(action_name, False)

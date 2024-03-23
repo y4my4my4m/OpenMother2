@@ -139,6 +139,8 @@ input_controller = InputController()
 # else:
 #     print("No joysticks found")
     
+swirl_animation = False
+running = True
 
 def draw_entities_sorted(player, npcs, camera, screen):
     # Combine player and NPCs into one list, assuming they have similar attributes for position
@@ -255,6 +257,7 @@ def draw_everything():
 
 
 def draw_debug():
+    handle_debug()
     if debug_view_collision:
         # Render collision boxes for debugging
         for index, box in enumerate(collision_boxes):
@@ -346,23 +349,64 @@ def draw_status_panel(screen, character):
     screen.blit(panel_background_border, (panel_x-2, panel_y-2))
     screen.blit(panel_background, (panel_x, panel_y))
 
+
+
 def handle_menu_interaction():
     global menu_open, status_menu_open, current_selection, menu_selection
     # Opening/Closing Menu
-    if input_controller.is_action_pressed('action') and not menu_open:
+    if input_controller.is_action_pressed_once('action') and not menu_open:
         menu_open = True
         menu_selection = 0
         current_selection = menu_options[menu_selection]
-    elif input_controller.is_action_pressed('back') and menu_open:
+    elif input_controller.is_action_pressed_once('back') and menu_open:
         menu_open = False
         status_menu_open = False
+    elif input_controller.is_action_pressed_once('action') and  menu_open:
+        current_selection = menu_options[menu_selection]
+        if current_selection == "Talk to" and check_interaction(ness, npcs):
+            # Handle "Talk to" action
+            menu_open = False  # Close the menu
+            # Proceed with the interaction logic, which you might encapsulate in a function
+            if interacting_npc:
+                if dialogue_box.is_visible:
+                    dialogue_box.hide()
+                else:
+                    interacting_npc.interact()
+                    cursor_vertical_sfx.play()
 
+        elif current_selection == "Check" and check_interaction(ness, npcs):
+            menu_open = False 
+            if dialogue_box.is_visible:
+                dialogue_box.hide()
+            else:
+                interacting_npc.check()
+                cursor_vertical_sfx.play()
+            if interacting_npc:
+                if interacting_npc.pending_battle:
+                    game_state = GAME_STATE_BATTLE
+                    enter_battle_sfx = pygame.mixer.Sound('assets/sounds/enterbattle.wav')
+                    enter_battle_sfx.set_volume(0.5)
+                    enter_battle_sfx.play()
+                    # wait for the sound to finish
+                    swirl_animation = True
+
+                    pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+                    pygame.mixer.music.play(-1)
+                    interacting_npc.pending_battle = False
+        elif current_selection == "Status":
+            # menu_open = False
+            status_menu_open = True
+        else:
+            menu_open = False
+            status_menu_open = False
+            # Reset current_selection after handling the action
+            current_selection = None
     # Navigating Menu
     if menu_open:
         prev_selection = menu_selection
-        if input_controller.is_action_pressed('move_up') and menu_selection > 0:
+        if input_controller.is_action_pressed_once('move_up') and menu_selection > 0:
             menu_selection -= 1
-        if input_controller.is_action_pressed('move_down') and menu_selection < len(menu_options) - 1:
+        if input_controller.is_action_pressed_once('move_down') and menu_selection < len(menu_options) - 1:
             menu_selection += 1
         if menu_selection != prev_selection:
             current_selection = menu_options[menu_selection]
@@ -419,6 +463,18 @@ def swirl_draw(frames, opacity=128):
     pygame.time.wait(1000)  # Wait a second after the animation
     swirl_animation = False
 
+def handle_debug():
+    global debug_view_collision, debug_view_layer0, debug_view_layer1, debug_disable_collision
+    if input_controller.is_action_pressed_once('debug_1'):
+        if debug_view_collision:
+            debug_view_collision = not debug_view_collision
+    if input_controller.is_action_pressed_once('debug_2'):
+        debug_view_layer0 = not debug_view_layer0
+    if input_controller.is_action_pressed_once('debug_3'):
+        debug_view_layer1 = not debug_view_layer1
+    if input_controller.is_action_pressed_once('debug_4'):
+        debug_disable_collision = not debug_disable_collision
+
 def game_exploration():
     global game_state, swirl_animation, menu_open, status_menu_open, interacting_npc
     # Handle Player Movement
@@ -469,9 +525,6 @@ def game_exploration():
     dialogue_box.draw(screen)
 
 # Game loop
-swirl_animation = False
-running = True
-
 while running:
     events = pygame.event.get()
     input_controller.process_events(events)
