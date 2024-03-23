@@ -346,6 +346,28 @@ def draw_status_panel(screen, character):
     screen.blit(panel_background_border, (panel_x-2, panel_y-2))
     screen.blit(panel_background, (panel_x, panel_y))
 
+def handle_menu_interaction():
+    global menu_open, status_menu_open, current_selection, menu_selection
+    # Opening/Closing Menu
+    if input_controller.is_action_pressed('action') and not menu_open:
+        menu_open = True
+        menu_selection = 0
+        current_selection = menu_options[menu_selection]
+    elif input_controller.is_action_pressed('back') and menu_open:
+        menu_open = False
+        status_menu_open = False
+
+    # Navigating Menu
+    if menu_open:
+        prev_selection = menu_selection
+        if input_controller.is_action_pressed('move_up') and menu_selection > 0:
+            menu_selection -= 1
+        if input_controller.is_action_pressed('move_down') and menu_selection < len(menu_options) - 1:
+            menu_selection += 1
+        if menu_selection != prev_selection:
+            current_selection = menu_options[menu_selection]
+            cursor_vertical_sfx.play()
+
 def adjust_z_index(character, collision_boxes):
     for box in collision_boxes:
         if character.rect.colliderect(box):
@@ -397,162 +419,214 @@ def swirl_draw(frames, opacity=128):
     pygame.time.wait(1000)  # Wait a second after the animation
     swirl_animation = False
 
+def game_exploration():
+    global game_state, swirl_animation, menu_open, status_menu_open, interacting_npc
+    # Handle Player Movement
+    dx, dy = 0, 0
+    velocity = 4 if input_controller.is_action_pressed('shift') else 1  # Example: LSHIFT or corresponding joystick button increases speed
+
+    if input_controller.is_action_pressed('move_left'):
+        dx -= velocity
+    if input_controller.is_action_pressed('move_right'):
+        dx += velocity
+    if input_controller.is_action_pressed('move_up'):
+        dy -= velocity
+    if input_controller.is_action_pressed('move_down'):
+        dy += velocity
+
+    # Apply Movement
+    if not menu_open:
+        ness.move(dx, dy, debug_disable_collision)  # Adjust movement logic as per your game's requirements
+        camera.update(ness)  # Make sure the camera updates based on the player's new position
+
+    # Draw Game Elements
+    draw_everything()
+    draw_debug()
+    draw_menu()
+
+    # NPC Interaction and Battle Initiation
+    interacting_npc = check_interaction(ness, npcs)
+    if interacting_npc:
+        # This assumes 'action' is your interaction button; adjust as needed
+        # if input_controller.is_action_pressed('action') and not dialogue_box.is_visible:
+        #     # Handle NPC interaction here, e.g., showing dialogue or initiating a battle
+        #     dialogue_box.show(interacting_npc.dialogue)
+            
+        # Initiate battle if an NPC has a pending battle
+        if interacting_npc.force_battle and interacting_npc.pending_battle:
+            game_state = GAME_STATE_BATTLE
+            pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
+            swirl_animation = True
+            pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+            pygame.mixer.music.play(-1)
+            interacting_npc.pending_battle = False
+
+    if swirl_animation:
+        swirl_draw(swirl_frame_images, 128)
+
+    if not interacting_npc or not dialogue_box.is_visible:
+        dialogue_box.hide()
+    dialogue_box.draw(screen)
+
 # Game loop
 swirl_animation = False
 running = True
+
 while running:
-    # Gather all events
     events = pygame.event.get()
-
-    # Process input events
     input_controller.process_events(events)
+
     if game_state == GAME_STATE_EXPLORATION:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 4:  # Scroll up
-                    camera.zoom += 0.1
-                elif event.button == 5:  # Scroll down
-                    camera.zoom -= 0.1
-                    camera.zoom = max(0.1, camera.zoom)
-            if event.type == pygame.KEYDOWN:
-                if status_menu_open:
-                    status_menu_open = False
-                    menu_open = False
-                if event.key == pygame.K_LSHIFT:
-                    velocity = 4
-                elif event.key == pygame.K_SPACE:
-                    # Toggle menu open/close
-                    if menu_open:
-                        # If the menu is already open, the Space key now confirms the selection
-                        if current_selection == "Talk to" and check_interaction(ness, npcs):
-                            # Handle "Talk to" action
-                            menu_open = False  # Close the menu
-                            # Proceed with the interaction logic, which you might encapsulate in a function
-                            if interacting_npc:
-                                if dialogue_box.is_visible:
-                                    dialogue_box.hide()
-                                else:
-                                    interacting_npc.interact()
-                                    cursor_vertical_sfx.play()
+        handle_menu_interaction()
+        game_exploration()
+        
+    # if game_state == GAME_STATE_EXPLORATION:
+    #     for event in pygame.event.get():
+    #         if event.type == pygame.QUIT:
+    #             running = False
+    #         elif event.type == pygame.MOUSEBUTTONDOWN:
+    #             if event.button == 4:  # Scroll up
+    #                 camera.zoom += 0.1
+    #             elif event.button == 5:  # Scroll down
+    #                 camera.zoom -= 0.1
+    #                 camera.zoom = max(0.1, camera.zoom)
+    #         if event.type == pygame.KEYDOWN:
+    #             if status_menu_open:
+    #                 status_menu_open = False
+    #                 menu_open = False
+    #             if event.key == pygame.K_LSHIFT:
+    #                 velocity = 4
+    #             elif event.key == pygame.K_SPACE:
+    #                 # Toggle menu open/close
+    #                 if menu_open:
+    #                     # If the menu is already open, the Space key now confirms the selection
+    #                     if current_selection == "Talk to" and check_interaction(ness, npcs):
+    #                         # Handle "Talk to" action
+    #                         menu_open = False  # Close the menu
+    #                         # Proceed with the interaction logic, which you might encapsulate in a function
+    #                         if interacting_npc:
+    #                             if dialogue_box.is_visible:
+    #                                 dialogue_box.hide()
+    #                             else:
+    #                                 interacting_npc.interact()
+    #                                 cursor_vertical_sfx.play()
 
-                        elif current_selection == "Check" and check_interaction(ness, npcs):
-                            menu_open = False 
-                            if dialogue_box.is_visible:
-                                dialogue_box.hide()
-                            else:
-                                interacting_npc.check()
-                                cursor_vertical_sfx.play()
-                            if interacting_npc:
-                                if interacting_npc.pending_battle:
-                                    game_state = GAME_STATE_BATTLE
-                                    enter_battle_sfx = pygame.mixer.Sound('assets/sounds/enterbattle.wav')
-                                    enter_battle_sfx.set_volume(0.5)
-                                    enter_battle_sfx.play()
-                                    # wait for the sound to finish
-                                    swirl_animation = True
+    #                     elif current_selection == "Check" and check_interaction(ness, npcs):
+    #                         menu_open = False 
+    #                         if dialogue_box.is_visible:
+    #                             dialogue_box.hide()
+    #                         else:
+    #                             interacting_npc.check()
+    #                             cursor_vertical_sfx.play()
+    #                         if interacting_npc:
+    #                             if interacting_npc.pending_battle:
+    #                                 game_state = GAME_STATE_BATTLE
+    #                                 enter_battle_sfx = pygame.mixer.Sound('assets/sounds/enterbattle.wav')
+    #                                 enter_battle_sfx.set_volume(0.5)
+    #                                 enter_battle_sfx.play()
+    #                                 # wait for the sound to finish
+    #                                 swirl_animation = True
 
-                                    pygame.mixer.music.load(BATTLE_MUSIC_PATH)
-                                    pygame.mixer.music.play(-1)
-                                    interacting_npc.pending_battle = False
-                        elif current_selection == "Status":
-                            # menu_open = False
-                            status_menu_open = True
-                        else:
-                            menu_open = False
-                            status_menu_open = False
-                            # Reset current_selection after handling the action
-                            current_selection = None
-                    else:
-                        if dialogue_box.is_visible:
-                            dialogue_box.hide()
-                        # Open the menu if it's not already open
-                        menu_open = True
-                        menu_selection = 0  # Optionally reset the menu selection index
-                        current_selection = menu_options[menu_selection]  # Update current_selection based on menu_selection
-                        cursor_vertical_sfx.play()
+    #                                 pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+    #                                 pygame.mixer.music.play(-1)
+    #                                 interacting_npc.pending_battle = False
+    #                     elif current_selection == "Status":
+    #                         # menu_open = False
+    #                         status_menu_open = True
+    #                     else:
+    #                         menu_open = False
+    #                         status_menu_open = False
+    #                         # Reset current_selection after handling the action
+    #                         current_selection = None
+    #                 else:
+    #                     if dialogue_box.is_visible:
+    #                         dialogue_box.hide()
+    #                     # Open the menu if it's not already open
+    #                     menu_open = True
+    #                     menu_selection = 0  # Optionally reset the menu selection index
+    #                     current_selection = menu_options[menu_selection]  # Update current_selection based on menu_selection
+    #                     cursor_vertical_sfx.play()
 
-                elif event.key == pygame.K_1:
-                    debug_view_collision = not debug_view_collision
-                elif event.key == pygame.K_2:
-                    debug_view_layer0 = not debug_view_layer0
-                elif event.key == pygame.K_3:
-                    debug_view_layer1 = not debug_view_layer1
-                elif event.key == pygame.K_4:
-                    debug_disable_collision = not debug_disable_collision
+    #             elif event.key == pygame.K_1:
+    #                 debug_view_collision = not debug_view_collision
+    #             elif event.key == pygame.K_2:
+    #                 debug_view_layer0 = not debug_view_layer0
+    #             elif event.key == pygame.K_3:
+    #                 debug_view_layer1 = not debug_view_layer1
+    #             elif event.key == pygame.K_4:
+    #                 debug_disable_collision = not debug_disable_collision
 
-                if event.key == pygame.K_e:
-                    print(f"{ness.x}, {ness.y}")
+    #             if event.key == pygame.K_e:
+    #                 print(f"{ness.x}, {ness.y}")
 
-                if menu_open:
-                    col = menu_selection % menu_columns
-                    row = menu_selection // menu_columns
+    #             if menu_open:
+    #                 col = menu_selection % menu_columns
+    #                 row = menu_selection // menu_columns
 
-                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        col = max(col - 1, 0)
-                        cursor_horizontal_sfx.play()
-                    elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        col = min(col + 1, menu_columns - 1)
-                        cursor_horizontal_sfx.play()
-                    elif event.key == pygame.K_UP or event.key == pygame.K_w:
-                        row = max(row - 1, 0)
-                        cursor_vertical_sfx.play()
-                    elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        row = min(row + 1, menu_rows - 1)
-                        cursor_vertical_sfx.play()
-                    elif event.key == pygame.K_ESCAPE:
-                        menu_open = False
-                    # Calculate the new selection index based on the updated row and column
-                    new_selection = row * menu_columns + col
-                    # Ensure the new selection is within the bounds of the menu options
-                    menu_selection = min(new_selection, len(menu_options) - 1)
-                    current_selection = menu_options[menu_selection]  
+    #                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+    #                     col = max(col - 1, 0)
+    #                     cursor_horizontal_sfx.play()
+    #                 elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+    #                     col = min(col + 1, menu_columns - 1)
+    #                     cursor_horizontal_sfx.play()
+    #                 elif event.key == pygame.K_UP or event.key == pygame.K_w:
+    #                     row = max(row - 1, 0)
+    #                     cursor_vertical_sfx.play()
+    #                 elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+    #                     row = min(row + 1, menu_rows - 1)
+    #                     cursor_vertical_sfx.play()
+    #                 elif event.key == pygame.K_ESCAPE:
+    #                     menu_open = False
+    #                 # Calculate the new selection index based on the updated row and column
+    #                 new_selection = row * menu_columns + col
+    #                 # Ensure the new selection is within the bounds of the menu options
+    #                 menu_selection = min(new_selection, len(menu_options) - 1)
+    #                 current_selection = menu_options[menu_selection]  
 
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_LSHIFT:
-                    velocity = 1
+    #         elif event.type == pygame.KEYUP:
+    #             if event.key == pygame.K_LSHIFT:
+    #                 velocity = 1
 
-        # Movement and animation update
-        dx, dy = 0, 0
+    #     # Movement and animation update
+    #     dx, dy = 0, 0
 
-        if input_controller.is_action_pressed('move_left'):
-            dx = -velocity
-        if input_controller.is_action_pressed('move_right'):
-            dx = velocity
-        if input_controller.is_action_pressed('move_up'):
-            dy = -velocity
-        if input_controller.is_action_pressed('move_down'):
-            dy = velocity
+    #     if input_controller.is_action_pressed('move_left'):
+    #         dx = -velocity
+    #     if input_controller.is_action_pressed('move_right'):
+    #         dx = velocity
+    #     if input_controller.is_action_pressed('move_up'):
+    #         dy = -velocity
+    #     if input_controller.is_action_pressed('move_down'):
+    #         dy = velocity
 
-        if not menu_open:
-            ness.move(dx, dy, debug_disable_collision)
-            animated_image = ness.animate()
-            camera.update(ness)
+    #     if not menu_open:
+    #         ness.move(dx, dy, debug_disable_collision)
+    #         animated_image = ness.animate()
+    #         camera.update(ness)
 
-        draw_everything()
-        draw_debug()
-        draw_menu()
+    #     draw_everything()
+    #     draw_debug()
+    #     draw_menu()
 
-        interacting_npc = check_interaction(ness, npcs)
+    #     interacting_npc = check_interaction(ness, npcs)
 
-        if interacting_npc:
-            if interacting_npc.force_battle and interacting_npc.pending_battle:
-                game_state = GAME_STATE_BATTLE
-                pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
-                # wait for the sound to finish
-                swirl_animation = True
+    #     if interacting_npc:
+    #         if interacting_npc.force_battle and interacting_npc.pending_battle:
+    #             game_state = GAME_STATE_BATTLE
+    #             pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
+    #             # wait for the sound to finish
+    #             swirl_animation = True
 
-                pygame.mixer.music.load(BATTLE_MUSIC_PATH)
-                pygame.mixer.music.play(-1)
-                interacting_npc.pending_battle = False
+    #             pygame.mixer.music.load(BATTLE_MUSIC_PATH)
+    #             pygame.mixer.music.play(-1)
+    #             interacting_npc.pending_battle = False
 
-        if swirl_animation:
-            swirl_draw(swirl_frame_images, 128)
+    #     if swirl_animation:
+    #         swirl_draw(swirl_frame_images, 128)
 
-        if not interacting_npc:
-            dialogue_box.hide()
-        dialogue_box.draw(screen)
+    #     if not interacting_npc:
+    #         dialogue_box.hide()
+    #     dialogue_box.draw(screen)
 
     elif game_state == GAME_STATE_BATTLE:
 
