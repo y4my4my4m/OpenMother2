@@ -352,8 +352,8 @@ def draw_status_panel(screen, character):
 
 
 def handle_menu_interaction():
-    global menu_open, status_menu_open, current_selection, menu_selection
-    # Opening/Closing Menu
+    global menu_open, status_menu_open, current_selection, menu_selection, status_menu_open
+    # Menu Input
     if input_controller.is_action_pressed_once('action') and not menu_open:
         menu_open = True
         menu_selection = 0
@@ -401,16 +401,44 @@ def handle_menu_interaction():
             status_menu_open = False
             # Reset current_selection after handling the action
             current_selection = None
+    elif input_controller.is_any_pressed_once() and status_menu_open:
+        menu_open = False
+        status_menu_open = False
     # Navigating Menu
     if menu_open:
-        prev_selection = menu_selection
-        if input_controller.is_action_pressed_once('move_up') and menu_selection > 0:
-            menu_selection -= 1
-        if input_controller.is_action_pressed_once('move_down') and menu_selection < len(menu_options) - 1:
-            menu_selection += 1
-        if menu_selection != prev_selection:
-            current_selection = menu_options[menu_selection]
+        col = menu_selection % menu_columns
+        row = menu_selection // menu_columns
+
+        if input_controller.is_action_pressed_once('move_left'):
+            col = max(col - 1, 0)
+            cursor_horizontal_sfx.play()
+        elif input_controller.is_action_pressed_once('move_right'):
+            col = min(col + 1, menu_columns - 1)
+            cursor_horizontal_sfx.play()
+        elif input_controller.is_action_pressed_once('move_up'):
+            row = max(row - 1, 0)
             cursor_vertical_sfx.play()
+        elif input_controller.is_action_pressed_once('move_down'):
+            row = min(row + 1, menu_rows - 1)
+            cursor_vertical_sfx.play()
+        elif input_controller.is_action_pressed_once('move_down'):
+            menu_open = False
+        # Calculate the new selection index based on the updated row and column
+        new_selection = row * menu_columns + col
+        # Ensure the new selection is within the bounds of the menu options
+        menu_selection = min(new_selection, len(menu_options) - 1)
+        current_selection = menu_options[menu_selection]  
+
+
+    # if menu_open:
+    #     prev_selection = menu_selection
+    #     if input_controller.is_action_pressed_once('move_up') and menu_selection > 0:
+    #         menu_selection -= 1
+    #     if input_controller.is_action_pressed_once('move_down') and menu_selection < len(menu_options) - 1:
+    #         menu_selection += 1
+    #     if menu_selection != prev_selection:
+    #         current_selection = menu_options[menu_selection]
+    #         cursor_vertical_sfx.play()
 
 def adjust_z_index(character, collision_boxes):
     for box in collision_boxes:
