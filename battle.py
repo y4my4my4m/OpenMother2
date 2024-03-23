@@ -122,6 +122,22 @@ class BattleSystem:
         return damage
 
     def player_command(self, action):
+        if action == "Run": 
+            if self.enemies[0].force_battle == True:
+                self.battle_log.add_message("You can't run from this battle!")
+                return
+            elif random.randint(1, 10) > 5:
+                self.battle_log.add_message("You ran away!")
+                # wait for user input
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        self.battle_ongoing_flag = False
+                        return
+                return
+            else:
+                self.battle_log.add_message("You couldn't escape!")
+                self.is_player_turn = False
+                return
         # attacks by default
         self.battle_log.add_message(f"{self.player.name} attacks!")
         damage = self.calculate_damage(self.player, self.enemies[0])
@@ -230,15 +246,16 @@ class BattleLog:
         self.messages = []
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.log_height = 230  # Height of the log area
+        self.log_height = 30  # Height of the log area
         self.message_limit = 6  # Max number of messages to display at once
 
     def add_message(self, message):
         """Add a message to the battle log queue."""
         print(message)
         self.messages.append(message)
-        # self.log_height += 20
+        self.log_height += 33
         if len(self.messages) > self.message_limit:
+            self.log_height -= 33
             self.messages.pop(0)  # Remove the oldest message
 
     def draw(self, screen):

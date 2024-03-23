@@ -66,6 +66,7 @@ BATTLE_MUSIC_PATH = 'assets/music/battle.mp3'
 # Load and play exploration music by default
 pygame.mixer.music.load(ONETT_MUSIC_PATH)
 pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(1.0)
 
 # Menu
 menu_open = False
@@ -300,15 +301,15 @@ def draw_status_panel(screen, character):
     # Character sprite
     sprite_resized = pygame.transform.scale(character.menu_sprite, (character.menu_sprite.get_width() * 3, character.menu_sprite.get_height() * 3))  # Adjust as needed
     character.make_transparent(sprite_resized)
-    panel_background.blit(sprite_resized, (panel_width // 2 - sprite_resized.get_width() //2, 60))
+    panel_background.blit(sprite_resized, (panel_width // 2 - sprite_resized.get_width() //2, 64))
 
     # Character name
     name_surface = menu_font.render(character.name, True, WHITE)
-    panel_background.blit(name_surface, (panel_width // 2  - sprite_resized.get_width() //2, 20))  # Adjust position as needed
+    panel_background.blit(name_surface, (panel_width // 2  - sprite_resized.get_width() //2 + 2, 20))  # Adjust position as needed
 
     # Display stats
     stat_start_x = 40
-    stat_start_y = 140
+    stat_start_y = 150
     stats_per_row = 3
     stat_count = 0
     for stat, value in character.stats.items():
@@ -418,7 +419,9 @@ while running:
                             if interacting_npc:
                                 if interacting_npc.pending_battle:
                                     game_state = GAME_STATE_BATTLE
-                                    pygame.mixer.Sound('assets/sounds/enterbattle.wav').play()
+                                    enter_battle_sfx = pygame.mixer.Sound('assets/sounds/enterbattle.wav')
+                                    enter_battle_sfx.set_volume(0.5)
+                                    enter_battle_sfx.play()
                                     # wait for the sound to finish
                                     swirl_animation = True
 
@@ -470,6 +473,8 @@ while running:
                     elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
                         row = min(row + 1, menu_rows - 1)
                         cursor_vertical_sfx.play()
+                    elif event.key == pygame.K_ESCAPE:
+                        menu_open = False
                     # Calculate the new selection index based on the updated row and column
                     new_selection = row * menu_columns + col
                     # Ensure the new selection is within the bounds of the menu options
@@ -558,6 +563,15 @@ while running:
             battle_system.draw()
             if battle_system.battle_ongoing_flag:
                 battle_menu.draw(screen)
+            if not battle_system.battle_ongoing_flag:
+                game_state = GAME_STATE_EXPLORATION
+                pygame.mixer.music.load(ONETT_MUSIC_PATH)
+                pygame.mixer.music.play(-1)
+                battle_system.battle_ongoing_flag = False
+                battle_system.end_battle()
+                battle_system.battle_active = False
+                interacting_npc = None
+                swirl_animation = False
             if battle_system.flash_enemy_flag:
                 original_sprite = battle_system.enemies[0].battle_sprite
                 for _ in range(3):  # Flash 3 times
@@ -605,9 +619,9 @@ while running:
                             pygame.mixer.music.play(-1)
                             battle_system.battle_active = False
                             break
-                    if event.key in (pygame.K_UP, pygame.K_DOWN):
-                        battle_menu.handle_input(event.key)
-                    elif event.key == pygame.K_SPACE:
+                    # if event.key in (pygame.K_UP, pygame.K_DOWN):
+                    #     battle_menu.handle_input(event.key)
+                    if event.key == pygame.K_SPACE:
                         if battle_system.is_player_turn:
                             action = battle_menu_options[battle_menu.menu_selection]
                             if action == "Bash":
@@ -617,16 +631,7 @@ while running:
                                     # battle_system.player_turn()
                                     battle_system.flash_enemy_flag = True
                             if action == "Run":
-                                if interacting_npc and interacting_npc.force_battle:
-                                    break
-                                game_state = GAME_STATE_EXPLORATION
-                                pygame.mixer.music.load(ONETT_MUSIC_PATH)
-                                pygame.mixer.music.play(-1)
-                                battle_system.battle_ongoing_flag = False
-                                battle_system.end_battle()
-                                battle_system.battle_active = False
-                                interacting_npc = None
-                                swirl_animation = False
+                                battle_system.player_command(action)
                         elif not battle_system.is_player_turn:
                             battle_system.enemy_turn()
 
