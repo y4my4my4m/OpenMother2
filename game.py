@@ -7,6 +7,7 @@ from utils.collision import load_collision_boxes
 from dialoguebox import DialogueBox
 from battle import BattleSystem, BattleMenu, BattleBackground, BattleLog
 import random
+from inputcontroller import InputController
 
 pygame.init()
 
@@ -116,6 +117,28 @@ battle_menu = BattleMenu(menu_font, battle_menu_options)
 
 # Gameover
 gameover_image = pygame.image.load('assets/sprites/gameover.png').convert_alpha()
+
+input_controller = InputController()
+
+# joystick_count = pygame.joystick.get_count()
+# if joystick_count > 0:
+#     # Initialize the first joystick
+#     joystick = pygame.joystick.Joystick(0)
+#     print("Joystick found")
+#     joystick.init()
+
+#     JOY_X = joystick.get_button(0)
+#     JOY_A = joystick.get_button(1)
+#     JOY_B = joystick.get_button(2)
+#     JOY_Y = joystick.get_button(3)
+#     JOY_L = joystick.get_button(4)
+#     JOY_R = joystick.get_button(5)
+#     JOY_SELECT = joystick.get_button(8)
+#     JOY_START = joystick.get_button(9)
+
+# else:
+#     print("No joysticks found")
+    
 
 def draw_entities_sorted(player, npcs, camera, screen):
     # Combine player and NPCs into one list, assuming they have similar attributes for position
@@ -378,6 +401,11 @@ def swirl_draw(frames, opacity=128):
 swirl_animation = False
 running = True
 while running:
+    # Gather all events
+    events = pygame.event.get()
+
+    # Process input events
+    input_controller.process_events(events)
     if game_state == GAME_STATE_EXPLORATION:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -486,17 +514,16 @@ while running:
                     velocity = 1
 
         # Movement and animation update
-        keys = pygame.key.get_pressed()
         dx, dy = 0, 0
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            dx = -velocity
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            dx = velocity
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            dy = -velocity
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            dy = velocity
 
+        if input_controller.is_action_pressed('move_left'):
+            dx = -velocity
+        if input_controller.is_action_pressed('move_right'):
+            dx = velocity
+        if input_controller.is_action_pressed('move_up'):
+            dy = -velocity
+        if input_controller.is_action_pressed('move_down'):
+            dy = velocity
 
         if not menu_open:
             ness.move(dx, dy, debug_disable_collision)
