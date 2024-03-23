@@ -16,6 +16,7 @@ class InputController:
             'move_left': False, 'move_right': False, 'move_up': False, 'move_down': False,
             'action': False, 'back': False, 'shift': False, 'special': False,
             'select': False, 'start': False, 'bump_l': False, 'bump_r': False,
+            'zoom_out': False, 'zoom_in': False,
             'debug_1': False, 'debug_2': False, 'debug_3': False, 'debug_4': False,
         }
 
@@ -35,6 +36,7 @@ class InputController:
             pygame.K_SPACE: 'action', pygame.K_ESCAPE: 'back',
             pygame.K_LSHIFT: 'shift', pygame.K_RSHIFT: 'shift',
             pygame.K_BACKSPACE: 'select', pygame.K_RETURN: 'start',
+            pygame.K_MINUS: 'zoom_out', pygame.K_EQUALS: 'zoom_in',
             pygame.K_1: 'debug_1', pygame.K_2: 'debug_2',
             pygame.K_3: 'debug_3', pygame.K_4: 'debug_4',
         }
