@@ -35,7 +35,7 @@ class BattleSystem:
 
         #  this should be per NPC, not per battle
         self.last_update_time = time.time()
-        self.attack_interval = 3 #time in seconds?
+        self.attack_interval = 1.25 #time in seconds?
 
     def start_battle(self):
         self.battle_active = True
@@ -160,20 +160,21 @@ class BattleSystem:
         if self.is_player_turn:
             return
         self.battle_log.add_message(f"{self.enemies[0].name}'s turn.")
-        pygame.time.set_timer(ENEMY_ATTACK_SOUND_EVENT, 2000, True)
+        pygame.time.set_timer(ENEMY_ATTACK_SOUND_EVENT, 600, True)
     
     def handle_enemy_turn(self):
         if self.is_player_turn:
             return
         current_time = time.time()
         # print(current_time, self.last_update_time, current_time - self.last_update_time, self.attack_interval)
-        if current_time - self.last_update_time > self.attack_interval:
+        if current_time - self.last_update_time > random.uniform(self.attack_interval, self.attack_interval * 2):
             # attacks by default
             self.battle_log.add_message(f"{self.enemies[0].name} attacks!")
             damage = self.calculate_damage_enemy(self.enemies[0], self.player)
             self.player.stats["hp"] -= damage
             self.is_player_turn = True
             self.last_update_time = current_time
+            return
 
     def check_battle_end(self):
         if self.player.stats["hp"] <= 0:
