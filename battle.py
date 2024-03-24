@@ -35,7 +35,7 @@ class BattleSystem:
 
         #  this should be per NPC, not per battle
         self.last_update_time = time.time()
-        self.attack_interval = 1.25 #time in seconds?
+        self.attack_interval = 2 #time in seconds?
 
     def start_battle(self):
         self.battle_active = True
@@ -58,9 +58,12 @@ class BattleSystem:
 
     def draw_hud(self):
         self.screen.blit(pygame.transform.scale(battle_hud_box, (battle_hud_box.get_width() * 2, battle_hud_box.get_height() * 2)), (self.screen_width // 2 - battle_hud_box.get_width() // 2, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 ))
+
         # display player's name
-        player_name_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.name}", True, (0, 0, 0))
-        self.screen.blit(player_name_text, (self.screen_width // 2 - battle_hud_box.get_width() // 2 + 20, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 15))
+        player_name_image = pygame.image.load('assets/sprites/battle_name_ness.png')
+        player_name_image = pygame.transform.scale(player_name_image, (player_name_image.get_width() * 2, player_name_image.get_height() * 2))
+        self.screen.blit(player_name_image, (self.screen_width // 2 - battle_hud_box.get_width() // 2 + 20, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 25))
+        
         # display player HP
         player_hp_text = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 24).render(f"{self.player.stats['hp']}", True, (0, 0, 0))
         self.screen.blit(player_hp_text, (self.screen_width // 2 - battle_hud_box.get_width() // 2 + 170, (self.screen_height - battle_hud_box.get_height()) - battle_hud_box.get_height() - 40 + 45))
@@ -263,6 +266,8 @@ class BattleLog:
         self.screen_height = screen_height
         self.log_height = 30  # Height of the log area
         self.message_limit = 6  # Max number of messages to display at once
+        self.last_update_time = time.time()
+        self.fade_interval = 2 #time in seconds?
 
     def add_message(self, message):
         """Add a message to the battle log queue."""
@@ -301,6 +306,12 @@ class BattleLog:
                 text_surface = self.font.render(message, True, (255, 255, 255))
                 screen.blit(text_surface, (40, y_offset))
                 y_offset -= text_surface.get_height()  # Move up for the next message
+
+            now = time.time()
+            if now - self.last_update_time > self.fade_interval:
+                self.log_height -= 33
+                self.messages.pop(0)
+                self.last_update_time = now
 
 class NumberRoulette:
     def __init__(self, spritesheet_path, current_value):
