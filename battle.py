@@ -322,7 +322,7 @@ class NumberRoulette:
         self.frame_height = 12
         self.frames = self.load_frames()
         self.animation_state = []
-        self.frame_duration = 50
+        self.frame_duration = 1
         self.last_update_time = pygame.time.get_ticks()
         self.prepare_animation_state()
 
@@ -336,8 +336,12 @@ class NumberRoulette:
         return frames
 
     def set_target_value(self, value):
-        self.target_value = value
-        self.prepare_animation_state()
+        if value != self.target_value:  # Only update if there's a change
+            self.target_value = value
+            # Trigger the reevaluation of the animation state
+            self.prepare_animation_state()
+            # Start animating from the rightmost digit if there's a change
+            self.animation_state[-1]['animating'] = True
 
     def prepare_animation_state(self):
         target_str = str(self.target_value).zfill(len(str(self.current_value)))
@@ -348,30 +352,46 @@ class NumberRoulette:
             'frame': 0,
             'animating': False
         } for i in range(len(target_str))]
-
     def animate_digits(self):
-        self.current_value = self.target_value
-        for i in range(len(self.animation_state) - 1, -1, -1):  # Start from the rightmost digit
-            digit_info = self.animation_state[i]
-            if digit_info['digit'] != digit_info['target']:
-                if not any(d['animating'] for d in self.animation_state[i+1:]):  # No right-hand digit is animating
-                    digit_info['animating'] = True
-                    digit_info['frame'] = (digit_info['frame'] - 1) % 4
-                    if digit_info['frame'] == 0:  # Full cycle completed
-                        next_digit = (digit_info['digit'] - 1) % 10
-                        if next_digit > digit_info['digit']:  # Rolled over
-                            if i > 0:  # Prevent index error
-                                self.animation_state[i - 1]['animating'] = True  # Trigger left-hand digit animation
-                        digit_info['digit'] = next_digit
-                        if digit_info['digit'] == digit_info['target']:
-                            digit_info['animating'] = False  # Stop animating when target reached
-                    break  # Ensure only one digit updates per cycle
+        # Initialize carry-over logic
+        carry_over = False
 
-    # def check_completion(self):
-    #     if all(digit_info['digit'] == digit_info['target'] for digit_info in self.animation_state):
-    #         self.current_value = self.target_value
-    #         for digit_info in self.animation_state:  # Stop all animations
-    #             digit_info['animating'] = False
+        for i in range(len(self.animation_state) - 1, -1, -1):
+            digit_info = self.animation_state[i]
+            if i == len(self.animation_state) - 1:
+                # Rightmost digit always checks for animation unless it's already at target
+                if str(self.current_value).zfill(len(self.animation_state))[i] != str(digit_info['digit']):
+                    digit_info['animating'] = True
+
+            if digit_info['animating']:
+                digit_info['frame'] = (digit_info['frame'] - 1) % 4  # Animate
+
+                if digit_info['frame'] == 0:  # A full cycle completed
+                    digit_info['digit'] = (digit_info['digit'] - 1) % 10
+                    
+                    # Stop animating after completing the cycle, unless it's the rightmost digit
+                    if i != len(self.animation_state) - 1:
+                        digit_info['animating'] = False
+                    
+                    if digit_info['digit'] == 9:  # Indicates a rollover
+                        carry_over = True
+                    else:
+                        carry_over = False
+
+                    # Update the current value after this digit's change
+                    self.current_value = int(''.join(str(digit_info['digit']) for digit_info in self.animation_state))
+
+            if carry_over and i > 0:
+                # If there was a carry-over, the next left digit needs to animate for one cycle
+                # Trigger animation of the next digit to the left
+                self.animation_state[i - 1]['animating'] = True
+                carry_over = False  # Reset carry-over after it's been passed left
+
+        # If all digits have reached their target, halt all animations
+        if self.current_value == self.target_value:
+            for digit_info in self.animation_state:
+                digit_info['animating'] = False
+
 
     def update(self):
         now = pygame.time.get_ticks()
