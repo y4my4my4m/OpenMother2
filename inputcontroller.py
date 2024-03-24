@@ -1,6 +1,5 @@
 import pygame
 import sys
-
 class InputController:
     def __init__(self):
         self.joystick_enabled = False

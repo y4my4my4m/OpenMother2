@@ -3,6 +3,7 @@ import random
 import numpy as np
 import math
 import time
+from sfx import ENEMY_ATTACK_SOUND_EVENT
 
 pygame.init()
 # fixme
@@ -11,6 +12,7 @@ pygame.init()
 cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 battle_hud_box = pygame.image.load('assets/sprites/battle_hud_box.png')
+
 class BattleSystem:
     def __init__(self, screen, player, enemies, bg, log, screen_width, screen_height, bg_tfx=None):
         self.screen = screen
@@ -30,6 +32,10 @@ class BattleSystem:
         self.battle_ongoing_flag = True
         self.hp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["hp"])
         self.pp_roulette = NumberRoulette('assets/sprites/battle_numbers.png', self.player.stats["psi"])
+
+        #  this should be per NPC, not per battle
+        self.last_update_time = time.time()
+        self.attack_interval = 3 #time in seconds?
 
     def start_battle(self):
         self.battle_active = True
@@ -153,13 +159,21 @@ class BattleSystem:
     def enemy_turn(self):
         if self.is_player_turn:
             return
-        pygame.mixer.Sound('assets/sounds/enemyattack.wav').play()
         self.battle_log.add_message(f"{self.enemies[0].name}'s turn.")
-        # attacks by default
-        self.battle_log.add_message(f"{self.enemies[0].name} attacks!")
-        damage = self.calculate_damage_enemy(self.enemies[0], self.player)
-        self.player.stats["hp"] -= damage
-        self.is_player_turn = True
+        pygame.time.set_timer(ENEMY_ATTACK_SOUND_EVENT, 2000, True)
+    
+    def handle_enemy_turn(self):
+        if self.is_player_turn:
+            return
+        current_time = time.time()
+        # print(current_time, self.last_update_time, current_time - self.last_update_time, self.attack_interval)
+        if current_time - self.last_update_time > self.attack_interval:
+            # attacks by default
+            self.battle_log.add_message(f"{self.enemies[0].name} attacks!")
+            damage = self.calculate_damage_enemy(self.enemies[0], self.player)
+            self.player.stats["hp"] -= damage
+            self.is_player_turn = True
+            self.last_update_time = current_time
 
     def check_battle_end(self):
         if self.player.stats["hp"] <= 0:
@@ -219,20 +233,20 @@ class BattleMenu:
             text = self.font.render(option_text, True, (255, 255, 255))
             screen.blit(text, (item_x + 10, item_y + 10))
 
-    def handle_input(self, key):
+    def handle_input(self, command):
         col = self.menu_selection % self.menu_columns
         row = self.menu_selection // self.menu_columns
 
-        if key == pygame.K_LEFT or key == pygame.K_a:
+        if command == "move_left":
             col = max(col - 1, 0)
             cursor_horizontal_sfx.play()
-        elif key == pygame.K_RIGHT or key == pygame.K_d:
+        elif command == "move_right":
             col = min(col + 1, self.menu_columns - 1)
             cursor_horizontal_sfx.play()
-        elif key == pygame.K_UP or key == pygame.K_w:
+        elif command == "move_up":
             row = max(row - 1, 0)
             cursor_vertical_sfx.play()
-        elif key == pygame.K_DOWN or key == pygame.K_s:
+        elif command == "move_down":
             row = min(row + 1, self.menu_rows - 1)
             cursor_vertical_sfx.play()
 
