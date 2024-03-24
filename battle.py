@@ -423,6 +423,15 @@ class BattleBackground:
         self.image = pygame.transform.scale(self.original_image.copy(), (self.screen_width//1.6, self.screen_height//.9))
         self.effect_types = effect_types
 
+
+        # For background scrolling effect
+        # Create a new surface to hold the tiled background
+        self.tiled_surface = pygame.Surface((self.screen_width, self.screen_height))
+
+        # Calculate the number of times the image needs to be drawn to cover the screen
+        self.num_tiles_x = 0 # = int(np.ceil(self.screen_width / self.image.get_width())) + 1
+        self.num_tiles_y = 0 # = int(np.ceil(self.screen_height / image.get_height())) + 1
+
         # For palette cycling effect
         self.palette = None
         self.palette_index = 0
@@ -444,6 +453,8 @@ class BattleBackground:
         arr = pygame.surfarray.array3d(self.original_image)
         self.palette = np.unique(arr.reshape(-1, arr.shape[2]), axis=0)
         self.prepare_palette(self.original_image)
+        self.num_tiles_x = int(np.ceil(self.screen_width / self.original_image.get_width())) + 1
+        self.num_tiles_y = int(np.ceil(self.screen_height / self.original_image.get_height())) + 1
     
     def update(self):
 
@@ -538,12 +549,7 @@ class BattleBackground:
         return image
 
     def apply_background_scrolling(self, image):
-        # Create a new surface to hold the tiled background
-        tiled_surface = pygame.Surface((self.screen_width, self.screen_height))
 
-        # Calculate the number of times the image needs to be drawn to cover the screen
-        num_tiles_x = int(np.ceil(self.screen_width / image.get_width())) + 1
-        num_tiles_y = int(np.ceil(self.screen_height / image.get_height())) + 1
 
         # Update the scroll position
         self.scroll_x += self.scroll_speed_x
@@ -554,14 +560,14 @@ class BattleBackground:
         self.scroll_y %= image.get_height()
 
         # Draw the image at each tile position to cover the screen
-        for x_tile in range(num_tiles_x):
-            for y_tile in range(num_tiles_y):
+        for x_tile in range(self.num_tiles_x):
+            for y_tile in range(self.num_tiles_y):
                 draw_x = x_tile * image.get_width() - self.scroll_x
                 draw_y = y_tile * image.get_height() - self.scroll_y
-                tiled_surface.blit(image, (draw_x, draw_y))
+                self.tiled_surface.blit(image, (draw_x, draw_y))
 
         # Instead of converting to an array and back, simply return the tiled surface
-        return tiled_surface
+        return self.tiled_surface
 
     def apply_interleaved_oscillation(self, image, amplitude=10, frequency=0.1):
         # Convert the image into a pixel array for manipulation

@@ -96,7 +96,7 @@ debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
 npcs = [
-    NPC("Hotel Manager", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [245, 10, 53, 3, 2, 2], 99, True, None, 3, 4, "look_at_player", dialogue_box),
+    NPC("Hotel Manager", 1020, 1500, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Hello, adventurer!", ness, [45, 10, 53, 3, 2, 2], 99, True, None, 3, 4, "look_at_player", dialogue_box),
     NPC("RandomNPC2", 1620, 1872, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Have you seen anything weird lately?", ness, [50, 20, 1, 3, 2, 2], 56, True, None, 1, 9, "look_at_player", dialogue_box),
     NPC("RandomNPC3", 1584, 1423, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "It's a beautiful day, isn't it?", ness, [20, 20, 2, 5, 7, 2], 111, True, None, 3, 6, "look_at_player", dialogue_box),
     NPC("RandomNPC4", 2154, 889, 16, 24, 'assets/sprites/npc_sprite.png', collision_boxes, "Beware of crows...", ness, [50, 20, 3, 5, 7, 2], 66, True, None, 3, 2, "look_at_player", dialogue_box),
@@ -244,8 +244,12 @@ def draw_everything():
 
 def draw_debug():
     handle_debug()
+    menu_width, menu_height = 175, 45
     if debug_view_collision:
         # Render collision boxes for debugging
+        pygame.draw.rect(screen, BLACK, pygame.Rect(20, 70, menu_width, menu_height))
+        debug_view_collision_text = menu_font.render("Collision View", True, (255, 0, 0))
+        screen.blit(debug_view_collision_text, (30, 73))
         for index, box in enumerate(collision_boxes):
             # print(box)
             pygame.draw.rect(screen, (255, 0, 0), camera.apply(box), 2)  # Use a thickness of 2 for visibility
@@ -260,7 +264,6 @@ def draw_debug():
             # Blit the text at the transformed position
             screen.blit(box_id, transformed_text_rect.topleft)
     if debug_disable_collision:
-        menu_width, menu_height = 175, 45
         pygame.draw.rect(screen, BLACK, pygame.Rect(20, 20, menu_width, menu_height))
         text = menu_font.render("Collision Disabled", True, (255, 0, 0))
         screen.blit(text, (30, 25))
@@ -392,8 +395,7 @@ def swirl_draw(frames, opacity=128):
 def handle_debug():
     global debug_view_collision, debug_view_layer0, debug_view_layer1, debug_disable_collision
     if input_controller.is_action_pressed_once('debug_1'):
-        if debug_view_collision:
-            debug_view_collision = not debug_view_collision
+        debug_view_collision = not debug_view_collision
     if input_controller.is_action_pressed_once('debug_2'):
         debug_view_layer0 = not debug_view_layer0
     if input_controller.is_action_pressed_once('debug_3'):
@@ -565,6 +567,7 @@ while running:
             
             battle_background_tfx = None
             if random.randint(0, 100) < 20:
+                print("tfx")
                 effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
                 battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
                 scroll_x=random.randint(0,1)
