@@ -19,6 +19,8 @@ class Character:
         self.frame_rate = 150  # milliseconds
         self.moving = False
         self.collision_boxes = collision_boxes  # Store collision data
+        self.collision_from_top = False
+        self.collision_from_bottom = False
         # Battle
         self.stats = {
             "hp": stats[0],
@@ -69,32 +71,33 @@ class Character:
 
     def move(self, dx, dy, debug_disable_collision):
         # Proposed new position
-        new_rect = self.rect.move(dx, dy)
-        
+        character_rect = self.rect.move(dx, dy)
+        collision_detected = False
+
         if not debug_disable_collision:
             for box in self.collision_boxes:
-                if new_rect.colliderect(box):
-                    # Horizontal collision
-                    # if dx > 0:  # Moving right
-                    #     # Smoothly adjust the character right up to the left edge of the box
-                    #     dx = box.left - self.rect.right
-                    # elif dx < 0:  # Moving left
-                    #     # Smoothly adjust the character left up to the right edge of the box
-                    #     dx = box.right - self.rect.left
-                    
-                    # Vertical collision - allowing partial overlap for smooth transition
-                    if dy > 0:  # Moving down
-                        # Allow moving down until character's bottom edge is at box's halfway point
-                        halfway_down = box.top + (box.height // 2)
-                        if self.rect.bottom + dy > halfway_down:
-                            dy = halfway_down - self.rect.bottom
-                    elif dy < 0:  # Moving up
-                        # Allow moving up until character's top edge is at box's halfway point
-                        halfway_up = box.bottom - (box.height // 2)
-                        if self.rect.top + dy < halfway_up:
-                            dy = halfway_up - self.rect.top
+                if character_rect.colliderect(box):
+                    collision_detected = True
 
-        # Update the character's position
+                    # Handle vertical collisions
+                    if dy > 0:  # Moving down
+                        self.collision_from_top = True
+                        dy = min(dy, box.top - self.rect.bottom)
+                    elif dy < 0:  # Moving up
+                        self.collision_from_bottom = True
+                        dy = max(dy, box.bottom - self.rect.top)
+
+            # If no collision was detected and player is moving away from the collision, reset flags
+            if not collision_detected:
+                if dy > 0 and self.collision_from_bottom:  # Moving down, was colliding from bottom
+                    # Check if sufficiently moved away
+                    if all(self.rect.bottom <= box.top for box in self.collision_boxes):
+                        self.collision_from_bottom = False
+                elif dy < 0 and self.collision_from_top:  # Moving up, was colliding from top
+                    if all(self.rect.top >= box.bottom for box in self.collision_boxes):
+                        self.collision_from_top = False
+
+        # Apply the calculated movement
         self.x += dx
         self.y += dy
         self.rect.topleft = (self.x, self.y)

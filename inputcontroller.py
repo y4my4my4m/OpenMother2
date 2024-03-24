@@ -17,6 +17,7 @@ class InputController:
             'select': False, 'start': False, 'bump_l': False, 'bump_r': False,
             'zoom_out': False, 'zoom_in': False,
             'debug_1': False, 'debug_2': False, 'debug_3': False, 'debug_4': False,
+            'debug_5': False,
         }
 
         # Resettable states for detecting single press or release events
@@ -38,6 +39,7 @@ class InputController:
             pygame.K_MINUS: 'zoom_out', pygame.K_EQUALS: 'zoom_in',
             pygame.K_1: 'debug_1', pygame.K_2: 'debug_2',
             pygame.K_3: 'debug_3', pygame.K_4: 'debug_4',
+            pygame.K_5: 'debug_5'
         }
 
         # Mapping of joystick button IDs to actions

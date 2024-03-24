@@ -88,10 +88,10 @@ cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
 # Debug
-debug_view_collision = False
+debug_view_collision = True
 debug_view_layer0 = False
 debug_view_layer1 = False
-debug_disable_collision = True
+debug_disable_collision = False
 debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
@@ -127,6 +127,8 @@ sound_controller = SoundController()
 
 swirl_animation = False
 running = True
+
+ness_sprite_index = 0
 
 def draw_entities_sorted(player, npcs, camera, screen):
     # Combine player and NPCs into one list, assuming they have similar attributes for position
@@ -245,6 +247,7 @@ def draw_everything():
 def draw_debug():
     handle_debug()
     menu_width, menu_height = 175, 45
+    # y_offset = 50
     if debug_view_collision:
         # Render collision boxes for debugging
         pygame.draw.rect(screen, BLACK, pygame.Rect(20, 70, menu_width, menu_height))
@@ -484,7 +487,7 @@ def handle_menu_interaction():
         current_selection = menu_options[menu_selection]  
 
 def game_exploration():
-    global game_state, swirl_animation, menu_open, status_menu_open, interacting_npc, dialogue_box
+    global game_state, swirl_animation, menu_open, status_menu_open, interacting_npc, dialogue_box, ness_sprite_index
 
     # Handle Camerea
     if input_controller.is_action_pressed('bump_r'):
@@ -510,6 +513,22 @@ def game_exploration():
         dy -= velocity
     if input_controller.is_action_pressed('move_down') and not input_controller.is_action_pressed('bump_r'):
         dy += velocity
+
+    if input_controller.is_action_pressed_once('debug_5'):
+        print("ness_sprite_index", ness_sprite_index)
+        ness_sprite_index += 1
+        if ness_sprite_index == 4:
+            ness_sprite_index = 0
+        if ness_sprite_index == 0:
+            ness.sprite_sheet = pygame.image.load('assets/sprites/ness_normal.png')
+        if ness_sprite_index == 1:
+            ness.sprite_sheet = pygame.image.load('assets/sprites/ness_naked.png')
+        if ness_sprite_index == 2:
+            ness.sprite_sheet = pygame.image.load('assets/sprites/ness_pajama.png')
+        if ness_sprite_index == 3:
+            ness.sprite_sheet = pygame.image.load('assets/sprites/ness_robot.png')
+        ness.make_transparent(ness.sprite_sheet)
+        ness.images = ness.load_images()
 
     # Apply Movement
     if not menu_open:
@@ -603,7 +622,7 @@ while running:
             battle_menu.handle_input('move_left')
         if input_controller.is_action_pressed_once('move_right'):
             battle_menu.handle_input('move_right')
-            
+
         if input_controller.is_action_pressed_once('back'):
             battle_system.battle_active = False
 
