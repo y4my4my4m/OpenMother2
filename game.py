@@ -121,28 +121,10 @@ battle_menu = BattleMenu(menu_font, battle_menu_options)
 # Gameover
 gameover_image = pygame.image.load('assets/sprites/gameover.png').convert_alpha()
 
+# Module Controllers
 input_controller = InputController()
 sound_controller = SoundController()
 
-# joystick_count = pygame.joystick.get_count()
-# if joystick_count > 0:
-#     # Initialize the first joystick
-#     joystick = pygame.joystick.Joystick(0)
-#     print("Joystick found")
-#     joystick.init()
-
-#     JOY_X = joystick.get_button(0)
-#     JOY_A = joystick.get_button(1)
-#     JOY_B = joystick.get_button(2)
-#     JOY_Y = joystick.get_button(3)
-#     JOY_L = joystick.get_button(4)
-#     JOY_R = joystick.get_button(5)
-#     JOY_SELECT = joystick.get_button(8)
-#     JOY_START = joystick.get_button(9)
-
-# else:
-#     print("No joysticks found")
-    
 swirl_animation = False
 running = True
 
@@ -679,126 +661,6 @@ while running:
         
         pygame.display.flip()
 
-
-
-    # elif game_state == GAME_STATE_BATTLE:
-
-    #     if battle_system is None or not battle_system.battle_active:
-    #         battle_effects = []
-    #         # effects = ["interleaved_oscillation", "palette_cycling"]
-    #         # effects = ["palette_cycling"]
-    #         effects = ["horizontal_oscillation", "vertical_oscillation", "interleaved_oscillation", "palette_cycling", "background_scrolling"]
-    #         battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
-    #         scroll_x=random.randint(0,1)
-    #         scroll_y=random.randint(0,1)
-    #         scroll_speed_x=random.randint(-3,3)
-    #         scroll_speed_y=random.randint(-3,3)
-    #         background_id = random.randint(1,327)
-    #         print(battle_effects, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
-    #         battle_background = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, screen_width, screen_height, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
-            
-    #         battle_background_tfx = None
-    #         if random.randint(0, 100) < 20:
-    #             print("tfx")
-    #             effects = ["horizontal_oscillation", "vertical_oscillation", "palette_cycling", "background_scrolling"]
-    #             battle_effects = random.sample(effects, k=random.randint(1, len(effects)))
-    #             scroll_x=random.randint(0,1)
-    #             scroll_y=random.randint(0,1)
-    #             scroll_speed_x=random.randint(-3,3)
-    #             scroll_speed_y=random.randint(-3,3)
-    #             battle_background_tfx = BattleBackground(f'assets/sprites/battle_backgrounds/{background_id}.png', battle_effects, screen_width, screen_height, scroll_x, scroll_y, scroll_speed_x, scroll_speed_y)
-
-    #         battle_log = BattleLog(menu_font, screen_width, screen_height)
-    #         battle_system = BattleSystem(screen, ness, [interacting_npc], battle_background, battle_log, screen_width, screen_height, battle_background_tfx)
-    #         battle_system.start_battle()
-
-    #     while battle_system.battle_active:
-    #         screen.fill((0, 0, 0))  # Clear screen
-    #         battle_system.draw()
-    #         if battle_system.battle_ongoing_flag:
-    #             battle_menu.draw(screen)
-    #         if not battle_system.battle_ongoing_flag:
-    #             game_state = GAME_STATE_EXPLORATION
-    #             pygame.mixer.music.load(ONETT_MUSIC_PATH)
-    #             pygame.mixer.music.play(-1)
-    #             battle_system.battle_ongoing_flag = False
-    #             battle_system.end_battle()
-    #             battle_system.battle_active = False
-    #             interacting_npc = None
-    #             swirl_animation = False
-    #         if battle_system.flash_enemy_flag:
-    #             original_sprite = battle_system.enemies[0].battle_sprite
-    #             for _ in range(3):  # Flash 3 times
-    #                 battle_system.enemies[0].battle_sprite = pygame.Surface((0, 0))  # Make sprite invisible
-
-    #                 screen.fill((0, 0, 0))  # Clear screen
-    #                 battle_system.draw()
-    #                 battle_menu.draw(screen)
-    #                 battle_system.draw_enemy(battle_system.enemies[0])
-    #                 pygame.display.update()
-    #                 # clock.tick(FPS)
-    #                 # FIXME
-    #                 pygame.time.delay(100 // 3)
-                    
-    #                 battle_system.enemies[0].battle_sprite = original_sprite  # Restore sprite visibility
-
-    #                 screen.fill((0, 0, 0))  # Clear screen
-    #                 battle_system.draw()
-    #                 battle_menu.draw(screen)
-    #                 battle_system.draw_enemy(battle_system.enemies[0])
-    #                 pygame.display.update()
-    #                 # clock.tick(FPS)
-    #                 # FIXME
-    #                 pygame.time.delay(100 // 3)
-    #             battle_system.flash_enemy_flag = False
-    #         else:
-    #             battle_system.draw_enemy(battle_system.enemies[0])
-    #         pygame.display.flip()
-    #         # Handle events specifically for the battle state
-    #         for event in pygame.event.get():
-    #             if event.type == pygame.QUIT:
-    #                 running = False
-    #                 # battle_system.battle_active = False
-    #             elif event.type == pygame.KEYDOWN:
-    #                 if not battle_system.battle_ongoing_flag:
-    #                     if battle_system.player_alive:
-    #                         game_state = GAME_STATE_EXPLORATION
-    #                         pygame.mixer.music.load(ONETT_MUSIC_PATH)
-    #                         pygame.mixer.music.play(-1)
-    #                         battle_system.battle_active = False
-    #                         break
-    #                     else:
-    #                         game_state = GAME_STATE_GAMEOVER
-    #                         pygame.mixer.music.load('assets/music/gameover.mp3')
-    #                         pygame.mixer.music.play(-1)
-    #                         battle_system.battle_active = False
-    #                         break
-    #                 # if event.key in (pygame.K_UP, pygame.K_DOWN):
-    #                 #     battle_menu.handle_input(event.key)
-    #                 if event.key == pygame.K_SPACE:
-    #                     if battle_system.is_player_turn:
-    #                         action = battle_menu_options[battle_menu.menu_selection]
-    #                         if action == "Bash":
-    #                             hit = battle_system.player_command(action)
-    #                             if hit:
-    #                                 pygame.mixer.Sound('assets/sounds/attack1.wav').play()
-    #                                 # battle_system.player_turn()
-    #                                 battle_system.flash_enemy_flag = True
-    #                         if action == "Run":
-    #                             battle_system.player_command(action)
-    #                     elif not battle_system.is_player_turn:
-    #                         battle_system.enemy_turn()
-
-    #                 elif event.key == pygame.K_ESCAPE:
-    #                     battle_system.battle_active = False
-
-    #                 battle_menu.handle_input(event.key)
-
-    #         if battle_system.check_battle_end():
-    #             battle_system.end_battle()
-    #             interacting_npc = None
-    #             swirl_animation = False
-    
     elif game_state == GAME_STATE_GAMEOVER:
         scaled_gameover_image = pygame.transform.scale(gameover_image, (screen_width, screen_height))
         screen.blit(scaled_gameover_image, (0, 0))
