@@ -515,9 +515,10 @@ def game_exploration():
         dy += velocity
 
     if input_controller.is_action_pressed_once('debug_5'):
-        print("ness_sprite_index", ness_sprite_index)
+        # print("ness_sprite_index", ness_sprite_index)
         ness_sprite_index += 1
-        if ness_sprite_index == 4:
+        
+        if ness_sprite_index == 5:
             ness_sprite_index = 0
         if ness_sprite_index == 0:
             ness.sprite_sheet = pygame.image.load('assets/sprites/ness_normal.png')
@@ -527,6 +528,9 @@ def game_exploration():
             ness.sprite_sheet = pygame.image.load('assets/sprites/ness_pajama.png')
         if ness_sprite_index == 3:
             ness.sprite_sheet = pygame.image.load('assets/sprites/ness_robot.png')
+        if ness_sprite_index == 4:
+            # missing the in-between idle sprites for lucas
+            ness.sprite_sheet = pygame.image.load('assets/sprites/lucas_normal.png')
         ness.make_transparent(ness.sprite_sheet)
         ness.images = ness.load_images()
 
