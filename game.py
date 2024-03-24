@@ -15,17 +15,19 @@ pygame.init()
 # Screen Configuration
 FULLSCREEN = False
 
-screen_width = 1280
-screen_height = 720
-screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCREEN if FULLSCREEN else 0) | pygame.DOUBLEBUF)
+
+if FULLSCREEN:
+    infoObject = pygame.display.Info()
+    screen_width = infoObject.current_w
+    screen_height = infoObject.current_h
+    #make it full screen
+    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN | pygame.DOUBLEBUF)
+else:
+    screen_width = 1280
+    screen_height = 720
+    screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCREEN if FULLSCREEN else 0) | pygame.DOUBLEBUF)
 
 # detect screen resolution
-# infoObject = pygame.display.Info()
-# screen_width = infoObject.current_w
-# screen_height = infoObject.current_h
-# #make it full screen
-# screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN | pygame.DOUBLEBUF)
-
 # Colors and FPS
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
