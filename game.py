@@ -1,14 +1,20 @@
 import pygame
 import sys
+import random
+
 from character import Character
 from npc import NPC
 from camera import Camera
 from utils.collision import load_collision_boxes
 from dialoguebox import DialogueBox
 from battle import BattleSystem, BattleMenu, BattleBackground, BattleLog
-import random
 from inputcontroller import InputController
 from sfx import SoundController
+from array import array
+
+import numpy as np
+import moderngl
+
 
 pygame.init()
 
@@ -21,11 +27,115 @@ if FULLSCREEN:
     screen_width = infoObject.current_w
     screen_height = infoObject.current_h
     #make it full screen
-    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN | pygame.DOUBLEBUF)
+    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN | pygame.OPENGL | pygame.DOUBLEBUF)
 else:
     screen_width = 1280
     screen_height = 720
-    screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCREEN if FULLSCREEN else 0) | pygame.DOUBLEBUF)
+    screen = pygame.display.set_mode((screen_width, screen_height), (pygame.FULLSCREEN if FULLSCREEN else 0) | pygame.OPENGL | pygame.DOUBLEBUF)
+
+ctx = moderngl.create_context()
+
+# Quad covering the viewport
+quad_vertices = array('f', [
+    -1.0, -1.0, 0.0, 1.0,
+     1.0, -1.0, 1.0, 1.0,
+    -1.0,  1.0, 0.0, 0.0,
+     1.0,  1.0, 1.0, 0.0,
+])
+
+# Assuming you have the quad_vertices buffer created
+quad_vbo = ctx.buffer(quad_vertices.tobytes())
+
+bright_fs = '''
+    #version 330 core
+    out vec4 FragColor;
+    in vec2 v_texcoord;
+
+    uniform sampler2D scene;
+
+    void main() {
+        vec3 color = texture(scene, v_texcoord).rgb;
+        float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+        if(brightness > 0.9) // Adjust threshold as needed
+            FragColor = vec4(color, 1.0);
+        else
+            FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+    '''
+
+blur_fs = '''
+    #version 330 core
+    out vec4 FragColor;
+    in vec2 v_texcoord;
+
+    uniform sampler2D brightText;
+    uniform bool horizontal;
+    uniform float weight[5] = float[](0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+
+    void main() {
+        vec2 tex_offset = 1.0 / textureSize(brightText, 0); // Gets the size of one texel
+        vec3 result = texture(brightText, v_texcoord).rgb * weight[0];
+        if(horizontal) {
+            for(int i = 1; i < 5; ++i) {
+                result += texture(brightText, v_texcoord + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+                result += texture(brightText, v_texcoord - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+            }
+        } else {
+            for(int i = 1; i < 5; ++i) {
+                result += texture(brightText, v_texcoord + vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+                result += texture(brightText, v_texcoord - vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+            }
+        }
+        FragColor = vec4(result, 1.0);
+    }
+    '''
+
+blend_fs = '''
+    #version 330 core
+    out vec4 FragColor;
+    in vec2 v_texcoord;
+
+    uniform sampler2D scene;
+    uniform sampler2D bloomBlur;
+
+    void main() {
+        vec3 hdrColor = texture(scene, v_texcoord).rgb;
+        vec3 bloomColor = texture(bloomBlur, v_texcoord).rgb;
+        FragColor = vec4(hdrColor + bloomColor, 1.0); // Simple additive blending
+    }
+    '''
+
+vertex_shader = '''
+    #version 330
+    in vec2 vert;
+    in vec2 texcoord;
+    out vec2 v_texcoord;
+    void main() {
+        v_texcoord = texcoord;
+        gl_Position = vec4(vert, 0.0, 1.0);
+    }
+    '''
+
+# Compile shaders and create programs
+bright_program = ctx.program(vertex_shader=vertex_shader, fragment_shader=bright_fs)
+blur_program = ctx.program(vertex_shader=vertex_shader, fragment_shader=blur_fs)
+blend_program = ctx.program(vertex_shader=vertex_shader, fragment_shader=blend_fs)
+
+# Framebuffers for bright parts and blurring steps
+bright_fbo = ctx.framebuffer(color_attachments=[ctx.texture((screen_width, screen_height), components=4)])
+blur_fbo1 = ctx.framebuffer(color_attachments=[ctx.texture((screen_width, screen_height), components=4)])
+blur_fbo2 = ctx.framebuffer(color_attachments=[ctx.texture((screen_width, screen_height), components=4)])  # For two-pass blur
+
+
+scene_tex = ctx.texture((screen_width, screen_height), components=4)
+scene_fbo = ctx.framebuffer(color_attachments=[scene_tex])
+
+
+# Assuming quad_vbo is already created with 'vert' and 'texcoord' data
+bright_vao = ctx.vertex_array(bright_program, [(quad_vbo, '2f 2f', 'vert', 'texcoord')])
+blur_vao = ctx.vertex_array(blur_program, [(quad_vbo, '2f 2f', 'vert', 'texcoord')])
+blend_vao = ctx.vertex_array(blend_program, [(quad_vbo, '2f 2f', 'vert', 'texcoord')])
+
 
 # detect screen resolution
 # Colors and FPS
@@ -691,6 +801,36 @@ while running:
         scaled_gameover_image = pygame.transform.scale(gameover_image, (screen_width, screen_height))
         screen.blit(scaled_gameover_image, (0, 0))
         pygame.time.wait(1000)
+
+    # Clear the screen
+    ctx.clear()
+
+    # 1. Render your scene into scene_fbo
+    scene_fbo.use()
+    ctx.clear()  # Optionally clear if needed
+    draw_everything()
+
+    # Switch back to default framebuffer to draw the final image
+    ctx.screen.use()
+    ctx.clear()
+
+    # 2. Extract bright parts from the scene
+    bright_fbo.use()
+    bright_vao.render()
+
+    # 3. Apply Gaussian blur in two passes
+    blur_fbo1.use()
+    blur_program['horizontal'].value = True
+    blur_vao.render()
+
+    blur_fbo2.use()
+    blur_program['horizontal'].value = False
+    blur_vao.render()
+
+    # 4. Blend the original scene with the blurred bright parts
+    ctx.screen.use()
+    blend_vao.render()
+
     # Update the display
     pygame.display.flip()
     clock.tick(FPS)
