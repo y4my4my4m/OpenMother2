@@ -1,5 +1,9 @@
 # Open Mother2 / Open Earthbound
 
+# Install
+- `pip install pygame np`
+- `python game.py`
+
 ## Controls
 Supports Joystick/Keyboard
 - WASD/Arrows
@@ -12,7 +16,9 @@ Supports Joystick/Keyboard
 
 Why not.
 This is more of a test than a serious endeavour.
+
 I'd get better results using Godot or Unity, but this is something I've been making while I wait for Docker to build images.
+
 I wanted something that I can do entirely in the IDE while I wait.
 
 Enjoy:
