@@ -88,10 +88,10 @@ cursor_horizontal_sfx = pygame.mixer.Sound('assets/sounds/curshoriz.wav')
 cursor_vertical_sfx = pygame.mixer.Sound('assets/sounds/cursverti.wav')
 
 # Debug
-debug_view_collision = True
+debug_view_collision = False
 debug_view_layer0 = False
 debug_view_layer1 = False
-debug_disable_collision = False
+debug_disable_collision = True
 debug_font = pygame.font.Font('assets/fonts/earthbound-menu-extended.ttf', 12)
 
 # NPCs
